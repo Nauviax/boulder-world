@@ -1,6 +1,7 @@
 [gd_scene format=4 uid="uid://dpqdp2tqs3dt6"]
 
 [ext_resource type="Script" uid="uid://6kvideo6lw65" path="res://main_scene/main_scene.gd" id="1_angbg"]
+[ext_resource type="PackedScene" uid="uid://ckc6x62sbj681" path="res://entity/interactable/boulder/boulder.tscn" id="2_7ydga"]
 [ext_resource type="PackedScene" uid="uid://2nihqajv4pmu" path="res://entity/player/player.tscn" id="2_n0j53"]
 [ext_resource type="PackedScene" uid="uid://f568a0wdiaqb" path="res://entity/enemy/enemy.tscn" id="3_olt6v"]
 [ext_resource type="TileSet" uid="uid://x5ico26dg14" path="res://resources/tiles/tile_set.tres" id="4_bfjm1"]
@@ -15,6 +16,7 @@ size = Vector2(40, 1160)
 
 [node name="MainScene" type="Node2D" unique_id=1388666685]
 script = ExtResource("1_angbg")
+boulder_scene = ExtResource("2_7ydga")
 
 [node name="Player" parent="." unique_id=1315167089 instance=ExtResource("2_n0j53")]
 z_index = 15
@@ -44,24 +46,32 @@ texture = ExtResource("6_4md8c")
 
 [node name="Top" type="StaticBody2D" parent="Borders" unique_id=783617935]
 position = Vector2(960, -20)
+collision_layer = 2
+collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Borders/Top" unique_id=337824155]
 shape = SubResource("RectangleShape2D_g4v7s")
 
 [node name="Bottom" type="StaticBody2D" parent="Borders" unique_id=2101076412]
 position = Vector2(960, 1100)
+collision_layer = 2
+collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Borders/Bottom" unique_id=1475135949]
 shape = SubResource("RectangleShape2D_g4v7s")
 
 [node name="Left" type="StaticBody2D" parent="Borders" unique_id=1780140293]
 position = Vector2(-20, 540)
+collision_layer = 2
+collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Borders/Left" unique_id=1112222266]
 shape = SubResource("RectangleShape2D_bfjm1")
 
 [node name="Right" type="StaticBody2D" parent="Borders" unique_id=1428869276]
 position = Vector2(1940, 540)
+collision_layer = 2
+collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Borders/Right" unique_id=364024249]
 shape = SubResource("RectangleShape2D_bfjm1")
