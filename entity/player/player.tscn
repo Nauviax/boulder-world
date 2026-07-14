@@ -6,7 +6,12 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_8vdsg"]
 radius = 26.0
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yf5fn"]
+size = Vector2(80, 80)
+
 [node name="Player" type="CharacterBody2D" unique_id=1315167089]
+collision_layer = 4
+collision_mask = 26
 script = ExtResource("1_e6ar1")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1867915934]
@@ -17,5 +22,20 @@ shape = SubResource("CircleShape2D_8vdsg")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Body" unique_id=1372141858]
 rotation = -1.5707964
 sprite_frames = ExtResource("1_nqnt1")
-animation = &"idle"
-frame_progress = 0.23615082
+animation = &"hold"
+
+[node name="HoldingNode" type="Node2D" parent="Body" unique_id=534170246]
+z_index = 1
+position = Vector2(-15, 0)
+rotation = -1.5707964
+
+[node name="PickupOffset" type="Node2D" parent="Body/HoldingNode" unique_id=470069787]
+position = Vector2(0, 60)
+
+[node name="InteractionArea" type="Area2D" parent="Body" unique_id=958128988]
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Body/InteractionArea" unique_id=528384479]
+position = Vector2(55, 0)
+shape = SubResource("RectangleShape2D_yf5fn")

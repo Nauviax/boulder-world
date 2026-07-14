@@ -6,6 +6,8 @@
 radius = 23.0
 
 [node name="Enemy" type="CharacterBody2D" unique_id=1315167089]
+collision_layer = 8
+collision_mask = 30
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1867915934]
 shape = SubResource("CircleShape2D_pshc1")
