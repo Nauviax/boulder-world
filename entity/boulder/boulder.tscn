@@ -1,12 +1,13 @@
 [gd_scene format=3 uid="uid://ckc6x62sbj681"]
 
-[ext_resource type="Script" uid="uid://cdteqrwtjeeof" path="res://entity/interactable/boulder/boulder.gd" id="1_8fnyb"]
+[ext_resource type="Script" uid="uid://cdteqrwtjeeof" path="res://entity/boulder/boulder.gd" id="1_8fnyb"]
 [ext_resource type="Texture2D" uid="uid://m8ohtw86up7x" path="res://resources/entity/Boulder.png" id="1_p0i7d"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_g4v7s"]
 radius = 16.0
 
 [node name="Boulder" type="StaticBody2D" unique_id=458417574]
+z_index = 5
 collision_layer = 16
 collision_mask = 0
 script = ExtResource("1_8fnyb")

@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://dq6bqt7363tj"]
+
+[ext_resource type="Texture2D" uid="uid://dkn05pn6w3vcp" path="res://resources/environment/Castle.png" id="1_q7215"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bfjm1"]
+radius = 196.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
+size = Vector2(194, 275)
+
+[node name="Castle" type="StaticBody2D" unique_id=1100447753]
+z_index = 30
+collision_layer = 2
+collision_mask = 0
+
+[node name="CollisionTopCircle" type="CollisionShape2D" parent="." unique_id=1322720582]
+position = Vector2(0, -540)
+shape = SubResource("CircleShape2D_bfjm1")
+
+[node name="CollisionTopWall" type="CollisionShape2D" parent="." unique_id=1073039363]
+position = Vector2(0, 240)
+shape = SubResource("RectangleShape2D_g4v7s")
+
+[node name="CollisionBottomWall" type="CollisionShape2D" parent="." unique_id=1901303442]
+position = Vector2(0, -240)
+shape = SubResource("RectangleShape2D_g4v7s")
+
+[node name="CollisionBottomCircle" type="CollisionShape2D" parent="." unique_id=1584959937]
+position = Vector2(0, 540)
+shape = SubResource("CircleShape2D_bfjm1")
+
+[node name="Castle" type="Sprite2D" parent="." unique_id=403472217]
+scale = Vector2(1.3506945, 1.3506942)
+texture = ExtResource("1_q7215")
