@@ -8,9 +8,12 @@ radius = 196.0
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
 size = Vector2(194, 275)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yf5fn"]
+size = Vector2(194, 206)
+
 [node name="Castle" type="StaticBody2D" unique_id=1100447753]
 z_index = 30
-collision_layer = 2
+collision_layer = 130
 collision_mask = 0
 
 [node name="CollisionTopCircle" type="CollisionShape2D" parent="." unique_id=1322720582]
@@ -28,6 +31,13 @@ shape = SubResource("RectangleShape2D_g4v7s")
 [node name="CollisionBottomCircle" type="CollisionShape2D" parent="." unique_id=1584959937]
 position = Vector2(0, 540)
 shape = SubResource("CircleShape2D_bfjm1")
+
+[node name="Doorway" type="StaticBody2D" parent="." unique_id=1834280463]
+collision_layer = 128
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Doorway" unique_id=964670557]
+shape = SubResource("RectangleShape2D_yf5fn")
 
 [node name="Castle" type="Sprite2D" parent="." unique_id=403472217]
 scale = Vector2(1.3506945, 1.3506942)

@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://dycknplk48g2p"]
+
+[ext_resource type="Script" uid="uid://d1dut2oevbitf" path="res://effect/floating_text.gd" id="1_vxebf"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ceb1m"]
+
+[node name="FloatingText" type="Control" unique_id=441301414]
+z_index = 100
+custom_maximum_size = Vector2(0, 0)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_vxebf")
+
+[node name="Label" type="Label" parent="." unique_id=2090022444]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -95.0
+offset_top = -23.0
+offset_right = 95.0
+grow_horizontal = 2
+grow_vertical = 0
+size_flags_horizontal = 4
+text = "This is some sample text"
+label_settings = SubResource("LabelSettings_ceb1m")
+horizontal_alignment = 1
+vertical_alignment = 2

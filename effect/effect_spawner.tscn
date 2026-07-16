@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://bhruvbuhbn430"]
+
+[ext_resource type="Script" uid="uid://bxegt2rg706j4" path="res://effect/effect_spawner.gd" id="1_v3jqu"]
+[ext_resource type="PackedScene" uid="uid://dycknplk48g2p" path="res://effect/floating_text.tscn" id="2_c6rha"]
+
+[node name="EffectSpawner" type="Node2D" unique_id=1953903136]
+script = ExtResource("1_v3jqu")
+floating_text_scene = ExtResource("2_c6rha")

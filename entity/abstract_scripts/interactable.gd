@@ -8,8 +8,9 @@ class_name Interactable
 @onready var init_z_index = z_index # Bonus 50 added while in flight
 
 # Consts for modifying throw path
-const throw_height_factor = 0.2 # Ratio h/d; 0.2 means height is 20% of throw distance.
-const throw_scale_factor = 0.5 # % of base scale when at peak of arc
+const THROW_HEIGHT_FACTOR = 0.2 # Ratio h/d; 0.2 means height is 20% of throw distance.
+const THROW_SCALE_FACTOR = 0.5 # % of base scale when at peak of arc
+const THROW_INVALID_LAND_LAYER = 128 # Collision layer 8, for static objects that should cause a re-throw if landed on (Castle, etc)
 
 var is_held := false
 var in_air := false
@@ -37,7 +38,7 @@ func throw(target_pos: Vector2, speed: float):
 	var start_pos := position
 	var distance := start_pos.distance_to(target_pos)
 	var duration := distance / speed
-	var arc_height := distance * throw_height_factor
+	var arc_height := distance * THROW_HEIGHT_FACTOR
 	var tween := create_tween()
 	tween.set_parallel(true)  # run both tweens at same time
 	tween.tween_method(func(progress: float):
@@ -48,11 +49,24 @@ func throw(target_pos: Vector2, speed: float):
 	, 0.0, 1.0, duration)
 	tween.tween_method(func(progress: float):
 		# Scale based on arc progress
-		var scale_factor = 1.0 + sin(progress * PI) * throw_scale_factor
+		var scale_factor = 1.0 + sin(progress * PI) * THROW_SCALE_FACTOR
 		scale = Vector2(scale_factor, scale_factor)
 	, 0.0, 1.0, duration)
 	await tween.finished
-	land()
+	# Check for re-throw if inside a static object
+	var parameters = PhysicsPointQueryParameters2D.new()
+	parameters.position = position
+	parameters.collision_mask = THROW_INVALID_LAND_LAYER
+	var results = get_world_2d().direct_space_state.intersect_point(parameters, 1)
+	if not results.is_empty():
+		var new_target_vector := (target_pos - start_pos) / 2
+		if target_pos.x > screen_size.x or target_pos.x < 0:
+			new_target_vector.x = -new_target_vector.x # Momentum was inverted
+		if target_pos.y > screen_size.y or target_pos.y < 0:
+			new_target_vector.y = -new_target_vector.y # Momentum was inverted
+		throw(position + new_target_vector + Vector2(10, 0), speed / 2 + 10) # Bouncy, in same direction.
+	else:
+		land()
 
 # Called when landing, should be overridden if extra logic should run
 func land():
