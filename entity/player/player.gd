@@ -6,19 +6,22 @@ class_name Player
 @onready var interaction: Area2D = body.get_node("InteractionArea")
 @onready var holdingNode: Node2D = body.get_node("HoldingNode")
 @onready var pickupNode: Node2D = holdingNode.get_node("PickupOffset")
+@onready var above_effect_spawner: EffectSpawner = $AboveEffectSpawner
+@onready var back_effect_spawner: EffectSpawner = body.get_node("BackEffectSpawner")
 
 # Player movement consts
-const max_speed := 1024 # Max speed assuming no friction.
-const acceleration := 0.1 # % of remaining speed added each tick. (Remaining being max - current)
-const friction := 0.15 # % of speed lost each tick (60tps)
-const fastmode_mult = 1.5 # Speed and throw mult during fastmode
+const MAX_SPEED := 1024 # Max speed assuming no FRICTION.
+const ACCELERATION := 0.1 # % of remaining speed added each tick. (Remaining being max - current)
+const FRICTION := 0.15 # % of speed lost each tick (60tps)
+const FASTMODE_MULT = 1.5 # Speed and throw mult during fastmode
 
 # Player throwing consts
-const throw_distance := 600 # Pixels
-const throw_air_time := 1.0 # Seconds
-const throw_speed := throw_distance / throw_air_time
+const THROW_DISTANCE := 600 # Pixels
+const THROW_AIR_TIME := 1.0 # Seconds
+const THROW_SPEED := THROW_DISTANCE / THROW_AIR_TIME
 
 # Player state
+var control_enabled := false # Whether the player currently responds to input
 var fastmode := false # !!! TEMP, controls "prepare" movement
 var held_item: Interactable = null
 var last_dir_input := Vector2.ZERO # Used for throwing direction
@@ -41,14 +44,14 @@ func _physics_process(_delta: float) -> void:
 		input_dir.x += 1
 
 	# Misc calculations
-	var speed_mult = fastmode_mult if fastmode else 1.0
+	var speed_mult = FASTMODE_MULT if fastmode else 1.0
 	last_dir_input = input_dir.normalized()
 
-	# Apply friction to current velocity (Regardless of input)
-	velocity = lerp(velocity, Vector2.ZERO, friction)
+	# Apply FRICTION to current velocity (Regardless of input)
+	velocity = lerp(velocity, Vector2.ZERO, FRICTION)
 	# Lerp towards input direction, and face that direction
 	if input_dir != Vector2.ZERO:
-		velocity = lerp(velocity, last_dir_input * max_speed * speed_mult, acceleration)
+		velocity = lerp(velocity, last_dir_input * MAX_SPEED * speed_mult, ACCELERATION)
 		body.rotation = velocity.angle() # Only rotate if movement input exists
 
 	# Update animation based on player state
@@ -93,8 +96,8 @@ func drop():
 	if held_item:
 		animation.play("drop")
 		if last_dir_input != Vector2.ZERO:
-			var speed_mult = fastmode_mult if fastmode else 1.0
-			held_item.throw(position + last_dir_input * throw_distance * speed_mult, throw_speed * speed_mult)
+			var speed_mult = FASTMODE_MULT if fastmode else 1.0
+			held_item.throw(position + last_dir_input * THROW_DISTANCE * speed_mult, THROW_SPEED * speed_mult)
 		else:
 			held_item.drop(pickupNode.global_position)
 		held_item = null

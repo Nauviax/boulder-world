@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="BoulderWorld"
-run/main_scene="uid://dpqdp2tqs3dt6"
+run/main_scene="uid://co24xdvw1okc"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -63,6 +63,8 @@ interact={
 2d_physics/layer_3="Player"
 2d_physics/layer_4="Enemy"
 2d_physics/layer_5="Holdable"
+2d_physics/layer_6="Damage Zone"
+2d_physics/layer_8="Prevent Holdable Landing"
 
 [physics]
 

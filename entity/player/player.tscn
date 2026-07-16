@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://blqpwn68m3wy6" path="res://entity/player/player.gd" id="1_e6ar1"]
 [ext_resource type="SpriteFrames" uid="uid://dk28cq5n4txc2" path="res://entity/player/player_frames.tres" id="1_nqnt1"]
+[ext_resource type="PackedScene" uid="uid://bhruvbuhbn430" path="res://effect/effect_spawner.tscn" id="3_4pl66"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_8vdsg"]
 radius = 26.0
@@ -12,7 +13,7 @@ size = Vector2(80, 80)
 [node name="Player" type="CharacterBody2D" unique_id=1315167089]
 z_index = 15
 collision_layer = 4
-collision_mask = 26
+collision_mask = 58
 script = ExtResource("1_e6ar1")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1867915934]
@@ -40,3 +41,9 @@ collision_mask = 16
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Body/InteractionArea" unique_id=528384479]
 position = Vector2(55, 0)
 shape = SubResource("RectangleShape2D_yf5fn")
+
+[node name="BackEffectSpawner" parent="Body" unique_id=1953903136 instance=ExtResource("3_4pl66")]
+position = Vector2(-35, 0)
+
+[node name="AboveEffectSpawner" parent="." unique_id=145606412 instance=ExtResource("3_4pl66")]
+position = Vector2(-35, 0)

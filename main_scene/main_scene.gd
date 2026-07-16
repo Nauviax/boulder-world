@@ -1,24 +1,17 @@
 extends Node2D
 
-@export var boulder_scene: PackedScene
+@onready var level_scene: LevelScene = $LevelScene
+@onready var menu: Control = $Menu
 
+# On load, show menu and prepare game
 func _ready() -> void:
-	# Testing boulders, this is temporary code. (!!!)
-	var center := Vector2(100, 540)
-	var spacing := 128.0
+	menu.visible = true
+	level_scene.prepare_game()
 
-	var types := [
-		Boulder.Type.BASIC,
-		Boulder.Type.RED,
-		Boulder.Type.GREEN,
-		Boulder.Type.BLUE,
-		Boulder.Type.YELLOW,
-	]
+	# !!! DEBUGGING, game starts immediately anyway
+	level_scene.start_game()
 
-	var start_y := center.y - ((types.size() - 1) * spacing) * 0.5
-
-	for ii in types.size():
-		var boulder := boulder_scene.instantiate() as Boulder
-		boulder.type = types[ii]
-		boulder.position = Vector2(center.x, start_y + ii * spacing)
-		add_child(boulder)
+# On start button pressed, hide menu and start game
+func _on_start_button_pressed() -> void:
+	menu.visible = false
+	level_scene.start_game()

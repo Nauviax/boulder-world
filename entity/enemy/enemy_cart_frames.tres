@@ -1,0 +1,37 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://ct4rji41lcknl"]
+
+[ext_resource type="Texture2D" uid="uid://dgk35enkgokhs" path="res://resources/entity/Cart.png" id="1_i7vnd"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1c35m"]
+atlas = ExtResource("1_i7vnd")
+region = Rect2(452, 0, 226, 116)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aiati"]
+atlas = ExtResource("1_i7vnd")
+region = Rect2(0, 0, 226, 116)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4ynue"]
+atlas = ExtResource("1_i7vnd")
+region = Rect2(226, 0, 226, 116)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1c35m")
+}],
+"loop": 1,
+"name": &"hide",
+"speed": 0.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aiati")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ynue")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 2.0
+}]

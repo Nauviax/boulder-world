@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://cykew5dgapiq2"]
+
+[ext_resource type="Script" uid="uid://8lrku6pvn2ot" path="res://entity/enemy/enemy_cart.gd" id="1_7j76y"]
+[ext_resource type="SpriteFrames" uid="uid://ct4rji41lcknl" path="res://entity/enemy/enemy_cart_frames.tres" id="2_dniks"]
+[ext_resource type="PackedScene" uid="uid://bhruvbuhbn430" path="res://effect/effect_spawner.tscn" id="3_i6qq5"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_qno45"]
+size = Vector2(172, 100)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_o4p60"]
+radius = 20.0
+
+[node name="EnemyCart" type="CharacterBody2D" unique_id=1315167089]
+z_index = 10
+collision_layer = 8
+collision_mask = 46
+script = ExtResource("1_7j76y")
+
+[node name="CollisionCart" type="CollisionShape2D" parent="." unique_id=1867915934]
+shape = SubResource("RectangleShape2D_qno45")
+
+[node name="CollisionEnemy" type="CollisionShape2D" parent="." unique_id=374450598]
+position = Vector2(-112, 0)
+shape = SubResource("CircleShape2D_o4p60")
+
+[node name="Body" type="Node2D" parent="." unique_id=265745747]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Body" unique_id=1372141858]
+position = Vector2(-21, 0)
+sprite_frames = ExtResource("2_dniks")
+animation = &"idle"
+
+[node name="AboveEffectSpawner" parent="." unique_id=1953903136 instance=ExtResource("3_i6qq5")]
+position = Vector2(0, -65)
