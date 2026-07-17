@@ -63,7 +63,6 @@ interact={
 2d_physics/layer_3="Player"
 2d_physics/layer_4="Enemy"
 2d_physics/layer_5="Holdable"
-2d_physics/layer_6="Damage Zone"
 2d_physics/layer_8="Prevent Holdable Landing"
 
 [physics]

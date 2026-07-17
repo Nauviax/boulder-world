@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://ckudutk6hsd6n"]
+
+[ext_resource type="Texture2D" uid="uid://bve7emcaajipv" path="res://resources/misc/explosion.png" id="1_clpta"]
+[ext_resource type="Script" uid="uid://cehdda8oais74" path="res://entity/explosion/explosion.gd" id="1_oc7h3"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_g4v7s"]
+radius = 100.0
+
+[node name="Explosion" type="Node2D" unique_id=603188926]
+script = ExtResource("1_oc7h3")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=212290166]
+scale = Vector2(4, 4)
+texture = ExtResource("1_clpta")
+
+[node name="DamageArea" type="Area2D" parent="." unique_id=315261989]
+z_index = 3
+collision_layer = 0
+collision_mask = 12
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DamageArea" unique_id=1067011094]
+shape = SubResource("CircleShape2D_g4v7s")

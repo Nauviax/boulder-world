@@ -24,7 +24,6 @@ func _ready() -> void:
 	# Testing boulders, this is temporary code. (!!!)
 	var center := Vector2(50, 540)
 	var spacing := 128.0
-
 	var types := [
 		Boulder.Type.BASIC,
 		Boulder.Type.RED,
@@ -32,24 +31,14 @@ func _ready() -> void:
 		Boulder.Type.BLUE,
 		Boulder.Type.YELLOW,
 	]
-
 	var start_y := center.y - ((types.size() - 1) * spacing) * 0.5
-
 	for ii in types.size():
-		var boulder := boulder_scene.instantiate() as Boulder
-		boulder.type = types[ii]
-		boulder.position = Vector2(center.x, start_y + ii * spacing)
-		add_child(boulder)
+		spawn_boulder(Vector2(center.x, start_y + ii * spacing), types[ii])
 
 # Prepare game, cleaning up old entities, resetting scores, and spawning initial entities.
 func prepare_game():
-	player = player_scene.instantiate()
-	player.position = PLAYER_SPAWN_POS
-	add_child(player)
-	var boulder := boulder_scene.instantiate()
-	boulder.position = INIT_BOULDER_POS
-	add_child(boulder)
-	boulders.append(boulder)
+	spawn_player(false) # Spawn player, but do not give control yet
+	spawn_boulder()
 	# !!! TODO spawn initial wave and have them rally
 	
 	# !!! TEMP (First wave should be spawned by wave logic, not here. Prepare should still rally the first wave.)
@@ -69,10 +58,39 @@ func start_game():
 	for enemy in enemies:
 		enemy.startCharge()
 	
-# Enemy spawning methods
+# Spawning methods
+func spawn_player(has_control: bool = false):
+	if !player: # Player is not deleted, so only spawn if null
+		player = player_scene.instantiate() as Player
+		player.player_died.connect(_on_player_died)
+	player.position = PLAYER_SPAWN_POS
+	player.control_enabled = has_control
+	add_child(player)
+
+func spawn_boulder(spawn_pos: Vector2 = INIT_BOULDER_POS, spawn_type: Boulder.Type = Boulder.Type.BASIC):
+	var boulder := boulder_scene.instantiate() as Boulder
+	boulder.position = spawn_pos
+	boulder.type = spawn_type
+	add_child(boulder)
+	boulders.append(boulder)
+
 func spawn_enemy_basic(type: EnemyBasic.EnemyType):
 	var enemy := enemy_basic_scene.instantiate() as EnemyBasic
 	enemy.position = ENEMY_SPAWN_POS + Vector2(randi_range(-5, 5), randi_range(-ENEMY_SPAWN_Y_VARIANCE, ENEMY_SPAWN_Y_VARIANCE))
 	enemy.enemy_type = type
+	enemy.enemy_died.connect(_on_enemy_died)
 	add_child(enemy)
 	enemies.append(enemy)
+
+# Handle signals from entities
+func _on_enemy_died(enemy: Enemy) -> void:
+	enemies.erase(enemy)
+	if enemies.size() == 0:
+		# !!! TODO wave logic, spawn next wave
+		pass
+
+func _on_player_died() -> void:
+	remove_child(player) # Do not delete player, it may still be referenced
+	# !!! TODO lives logic. For now just respawn player after a second.
+	await get_tree().create_timer(1.0).timeout
+	spawn_player(true)

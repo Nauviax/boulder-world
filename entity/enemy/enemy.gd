@@ -1,6 +1,8 @@
 extends CharacterBody2D
 class_name Enemy
 
+signal enemy_died(enemy: Enemy)
+
 @onready var body: Node2D = $Body # Anything that rotates with the character
 @onready var animation: AnimatedSprite2D = body.get_node("AnimatedSprite2D")
 @onready var above_effect_spawner: EffectSpawner = $AboveEffectSpawner
@@ -12,14 +14,15 @@ const RALLY_X_VARIANCE = 25; # Allow some enemies to move forwards more. Also ac
 # Base enemy variables; can be overridden by archetype
 var base_speed: float = 40.0 # Base speed of the enemy
 var rally_speed_mult: float = 2 # Multiplier to base speed when rallying
-var aggro_speed_mult: float = 3 # Multiplier to base speed when aggro-ed on the player
+var aggro_speed_mult: float = 2.5 # Multiplier to base speed when aggro-ed on the player
 var base_health: int = 100 # Max health, not current health
 var avoidance_speed: float = 20.0 # Speed to move away from other bodies when too close
+var max_stun_duration: float = 2.0 # Max duration of stun, if taking 100% damage in one hit. (Ignoring the fact this would kill)
 
 # Enemy state (common to all enemies)
-enum EnemyState { JUSTSPAWNED, RALLYING, CHARGING, AGGRO, HIDING, DEAD } # !!! Investigate state machine nodes?
+enum EnemyState { JUSTSPAWNED, RALLYING, CHARGING, AGGRO, STUNNED, DOOMED, DEAD } # !!! Investigate state machine nodes?
 var state: EnemyState = EnemyState.JUSTSPAWNED # Note that JUSTSPAWNED has no behaviour.
-var desired_state: EnemyState = EnemyState.JUSTSPAWNED # State to return to when losing sight of player
+var desired_state: EnemyState = EnemyState.JUSTSPAWNED # State to return to when losing sight of player or clearing stun
 var rally_pos := RALLY_X_POS
 var aggro_target: Node2D = null # Player to aggro, if any
 var health: int = base_health # Current health, starts at max
@@ -34,13 +37,14 @@ func startRally():
 
 # Charge towards castle
 func startCharge():
-	if state == EnemyState.RALLYING:
+	if state == EnemyState.RALLYING: # Don't start charging if stunned/aggroed etc
 		state = EnemyState.CHARGING
 	desired_state = EnemyState.CHARGING
 
 # Aggro on the player
 func startAggro(target: Node2D):
-	state = EnemyState.AGGRO
+	if state == EnemyState.RALLYING or state == EnemyState.CHARGING:
+		state = EnemyState.AGGRO # Can only enter aggro state when able to move
 	aggro_target = target
 
 # Stop aggro on the player, return to desired state
@@ -48,10 +52,29 @@ func stopAggro():
 	state = desired_state
 	aggro_target = null
 
-# Start hiding, often due to imminent death
-func startHide():
-	state = EnemyState.HIDING
+# Stun the enemy for the given duration, often due to taking damage.
+func stun(duration: float):
+	state = EnemyState.STUNNED
 	animation.play("hide")
+	await get_tree().create_timer(duration).timeout
+	state = EnemyState.AGGRO if aggro_target != null else desired_state # Potentially resume aggro
+	animation.play("idle") # !!! It may be better to seperate state and animation state from this node? !!!
+
+# Doom this enemy. Enemy will stop moving until it is dead
+func doom():
+	state = EnemyState.DOOMED
+	animation.play("hide")
+	# !!! TODO show a temporary alert sprite !!!
+
+# Take damage, and die if health reaches 0
+func apply_damage(damage: float):
+	var stun_duration = (damage / base_health) * max_stun_duration
+	health -= int(damage)
+	if health <= 0:
+		emit_signal("enemy_died", self)
+		queue_free() # Remove enemy from scene. (!!! THIS IS TEMP BEFORE I GET SIGNALS WORKING)
+	else: # Simply freeze enemy for short duration if not dead
+		stun(stun_duration)
 
 # ===== #
 
@@ -108,7 +131,7 @@ func update_velocity(desired_velocity: Vector2):
 		# Enemies can not be "boosted" forwards by other enemies, only slowed down
 		if avoidance_vector.x < 0:
 			avoidance_vector.x = 0
-		# Enemies can not be pushed offscreen vertically
+		# Enemies can not be pushed offscreen vertically. Instead, push away from edge
 		if position.y < 10 and avoidance_vector.y < 0:
 			avoidance_vector.y = avoidance_speed / 2
 		elif position.y > screen_size.y - 10 and avoidance_vector.y > 0:
