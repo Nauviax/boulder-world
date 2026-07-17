@@ -11,6 +11,8 @@ class_name LevelScene
 # Initial spawns of various items
 const PLAYER_SPAWN_POS := Vector2(200, 540)
 const INIT_BOULDER_POS := Vector2(100, 540)
+const ENEMY_SPAWN_POS := Vector2(1900, 540)
+const ENEMY_SPAWN_Y_VARIANCE := 300
 
 # References to game entities, for convenience
 var player: Player
@@ -49,9 +51,28 @@ func prepare_game():
 	add_child(boulder)
 	boulders.append(boulder)
 	# !!! TODO spawn initial wave and have them rally
+	
+	# !!! TEMP (First wave should be spawned by wave logic, not here. Prepare should still rally the first wave.)
+	spawn_enemy_basic(EnemyBasic.EnemyType.BASIC)
+	for ii in range(10):
+		spawn_enemy_basic(EnemyBasic.EnemyType.FAST)
+	for enemy in enemies:
+		enemy.startRally()
 
 # Start game, enabling player control and (!!!) enemies + wave logic
 func start_game():
 	player.control_enabled = true
-	# !!! TODO start the rallying wave, show initial wave title, and kick off game loop
 	
+	# !!! TODO start the rallying wave, show initial wave title, and kick off game loop
+	# !!! In place of wave logic, just wait a few seconds then send off initial wave. (First wave is pre-spawned for menu)
+	await get_tree().create_timer(10.0).timeout
+	for enemy in enemies:
+		enemy.startCharge()
+	
+# Enemy spawning methods
+func spawn_enemy_basic(type: EnemyBasic.EnemyType):
+	var enemy := enemy_basic_scene.instantiate() as EnemyBasic
+	enemy.position = ENEMY_SPAWN_POS + Vector2(randi_range(-5, 5), randi_range(-ENEMY_SPAWN_Y_VARIANCE, ENEMY_SPAWN_Y_VARIANCE))
+	enemy.enemy_type = type
+	add_child(enemy)
+	enemies.append(enemy)

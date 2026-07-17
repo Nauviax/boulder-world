@@ -10,6 +10,9 @@ radius = 20.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_g4v7s"]
 radius = 350.0
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_hor07"]
+radius = 75.0
+
 [node name="EnemyBasic" type="CharacterBody2D" unique_id=1315167089]
 z_index = 10
 collision_layer = 8
@@ -29,13 +32,23 @@ animation = &"idle"
 [node name="AboveEffectSpawner" parent="." unique_id=1953903136 instance=ExtResource("3_pmu85")]
 position = Vector2(0, -30)
 
-[node name="Gamesense" type="Area2D" parent="." unique_id=1744447542]
+[node name="PlayerDetector" type="Area2D" parent="." unique_id=1744447542]
 collision_layer = 0
 collision_mask = 4
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Gamesense" unique_id=894035273]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerDetector" unique_id=894035273]
 shape = SubResource("CircleShape2D_g4v7s")
 debug_color = Color(0, 1, 0.69803923, 0.078431375)
 
-[connection signal="body_entered" from="Gamesense" to="." method="_on_gamesense_body_entered"]
-[connection signal="body_exited" from="Gamesense" to="." method="_on_gamesense_body_exited"]
+[node name="TooCloseDetector" type="Area2D" parent="." unique_id=807262226]
+collision_layer = 0
+collision_mask = 58
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TooCloseDetector" unique_id=2101145783]
+shape = SubResource("CircleShape2D_hor07")
+debug_color = Color(0, 1, 0.69803923, 0.078431375)
+
+[connection signal="body_entered" from="PlayerDetector" to="." method="_on_player_detected"]
+[connection signal="body_exited" from="PlayerDetector" to="." method="_on_player_lost"]
+[connection signal="body_entered" from="TooCloseDetector" to="." method="_new_too_close_body"]
+[connection signal="body_exited" from="TooCloseDetector" to="." method="_remove_too_close_body"]

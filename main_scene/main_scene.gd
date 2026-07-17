@@ -6,9 +6,10 @@ extends Node2D
 # On load, show menu and prepare game
 func _ready() -> void:
 	menu.visible = true
-	level_scene.prepare_game()
+	level_scene.prepare_game() # Rallies first wave early
 
 	# !!! DEBUGGING, game starts immediately anyway
+	await get_tree().create_timer(15.0).timeout
 	level_scene.start_game()
 
 # On start button pressed, hide menu and start game
