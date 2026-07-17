@@ -49,8 +49,9 @@ func startAggro(target: Node2D):
 
 # Stop aggro on the player, return to desired state
 func stopAggro():
-	state = desired_state
-	aggro_target = null
+	if state == EnemyState.AGGRO:
+		state = desired_state
+	aggro_target = null # Clear target even if currently stunned etc.
 
 # Stun the enemy for the given duration, often due to taking damage.
 func stun(duration: float):
