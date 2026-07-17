@@ -16,11 +16,11 @@ func _ready():
 
 # Player detected, start shooting at player
 func _on_gamesense_body_entered(player: Node2D):
-	startChase(player) # !!! TEMP NOT SHOOTING YET
+	startAggro(player) # !!! TEMP NOT SHOOTING YET
 
 # Player lost, return to original state
 func _on_gamesense_body_exited(_player: Node2D):
-	stopChase() # !!! TEMP NOT SHOOTING YET
+	stopAggro() # !!! TEMP NOT SHOOTING YET
 
-# I imagine this enemy will override chase to shoot at player and simply call charge tick instead of actual chase movement logic.
+# I imagine this enemy will override aggro to shoot at player and simply call charge tick instead of actual aggro movement logic.
 # !!! This enemy needs an ACTUAL idle animation, and a seperate charging animation. Likely rename others to similar, even if sprites are reused.

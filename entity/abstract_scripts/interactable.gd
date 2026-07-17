@@ -14,6 +14,10 @@ const THROW_INVALID_LAND_LAYER = 128 # Collision layer 8, for static objects tha
 
 var is_held := false
 var in_air := false
+var last_thrower: Node2D = null # Used to get thrower stats, if needed
+var last_throw_target: Vector2 = Vector2.ZERO # For re-throwing, if needed
+var last_throw_vector: Vector2 = Vector2.ZERO # For re-throwing, if needed
+var last_throw_speed: float = 0.0 # For re-throwing, if needed
 
 func pickup(holder: Node2D, offset: Vector2 = Vector2.ZERO):
 	if in_air: return # Shouldn't happen, but just in case
@@ -22,6 +26,7 @@ func pickup(holder: Node2D, offset: Vector2 = Vector2.ZERO):
 	reparent(holder, false)
 	position = offset # Centre on holder
 
+# For dropping, pass global_position to ensure pos is not relative to holder
 func drop(drop_pos: Vector2, restore_collision: bool = true):
 	is_held = false
 	collision_layer = init_collision_layer if restore_collision else 0
@@ -29,10 +34,14 @@ func drop(drop_pos: Vector2, restore_collision: bool = true):
 	position = drop_pos # Theoretically, position == global_position here
 
 # Animate from current position to target position
-func throw(target_pos: Vector2, speed: float):
+func throw(target_pos: Vector2, speed: float, thrower: Node2D):
 	if is_held:
-		drop(global_position, false) # Remain intangible
+		drop(global_position, false) # Remain intangible (global)
 	in_air = true
+	last_thrower = thrower
+	last_throw_target = target_pos
+	last_throw_vector = target_pos - position
+	last_throw_speed = speed
 	collision_layer = 0 # Redundant in most cases I assume but ehhh
 	z_index = init_z_index + 50
 	var start_pos := position
@@ -59,12 +68,7 @@ func throw(target_pos: Vector2, speed: float):
 	parameters.collision_mask = THROW_INVALID_LAND_LAYER
 	var results = get_world_2d().direct_space_state.intersect_point(parameters, 1)
 	if not results.is_empty():
-		var new_target_vector := (target_pos - start_pos) / 2
-		if target_pos.x > screen_size.x or target_pos.x < 0:
-			new_target_vector.x = -new_target_vector.x # Momentum was inverted
-		if target_pos.y > screen_size.y or target_pos.y < 0:
-			new_target_vector.y = -new_target_vector.y # Momentum was inverted
-		throw(position + new_target_vector + Vector2(10, 0), speed / 2 + 10) # Bouncy, in same direction.
+		rethrow(0.5, 0.5, true) # Re-throw at half distance and half speed, in same direction
 	else:
 		land()
 
@@ -73,7 +77,16 @@ func land():
 	in_air = false
 	collision_layer = init_collision_layer
 	z_index = init_z_index
-	pass
+
+# Calculate a new position to throw to, based on last throw
+func rethrow(distance_mult: float, speed_mult: float, use_horizontal_offset: bool):
+	var new_target_vector := last_throw_vector * distance_mult
+	var horisontal_offset := 10 if use_horizontal_offset else 0 # Add a small horizontal offset to avoid landing in same spot
+	if last_throw_target.x > screen_size.x or last_throw_target.x < 0:
+		new_target_vector.x = -new_target_vector.x # Momentum was inverted
+	if last_throw_target.y > screen_size.y or last_throw_target.y < 0:
+		new_target_vector.y = -new_target_vector.y # Momentum was inverted
+	throw(position + new_target_vector + Vector2(horisontal_offset, 0), last_throw_speed * speed_mult + horisontal_offset, last_thrower) # Bouncy, in same direction.
 
 # Helper function to "bounce" a vector off of a screen edge
 func bounce_screen_edges(next_position: Vector2) -> Vector2:

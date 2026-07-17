@@ -1,21 +1,27 @@
 extends Enemy
 class_name EnemyBasic
 
+@export var explosion_scene: PackedScene
+
 # Types of basic enemies
 enum EnemyType { BASIC, FAST }
 @export var enemy_type: EnemyType = EnemyType.BASIC
 
-const basic_animation_frames := preload("res://entity/enemy/enemy_basic_purple_frames.tres")
-const fast_animation_frames := preload("res://entity/enemy/enemy_basic_red_frames.tres")
+const BASIC_ANIMATION_FRAMES := preload("res://entity/enemy/enemy_basic_purple_frames.tres")
+const FAST_ANIMATION_FRAMES := preload("res://entity/enemy/enemy_basic_red_frames.tres")
 
 # Prepare enemy
 func _ready():
 	match enemy_type:
 		EnemyType.BASIC:
-			animation.sprite_frames = basic_animation_frames
+			animation.sprite_frames = BASIC_ANIMATION_FRAMES
+			base_health = 50 # Basic basic dies to a player throw. (!!! TODO HEALTHBARS !!!)
+			health = base_health
 		EnemyType.FAST:
-			animation.sprite_frames = fast_animation_frames
-			base_speed *= 1.75
+			animation.sprite_frames = FAST_ANIMATION_FRAMES
+			base_health = 75 # Still dies to player if red boulder, otherwise requires turret.
+			health = base_health
+			base_speed *= 1.5
 	animation.play("idle")
 
 	# !!! DEBUGGING BELOW
@@ -58,10 +64,34 @@ func _ready():
 		await get_tree().create_timer(delay).timeout
 		above_effect_spawner.create_floating_text(FloatingText.TextType.Small, "TEST MESSAGE SMALL REPEATING")
 
+# This enemy will explode when near the player, likely killing both the player and itself. (100dmg explosion by default)
+func explode():
+	var explosion := explosion_scene.instantiate() as Explosion
+	explosion.position = position
+	get_parent().add_child(explosion)
+	state = EnemyState.DEAD
+
+# ===== #
+
 # Player detected, start charging towards player
-func _on_gamesense_body_entered(player: Node2D):
-	startChase(player)
+func _on_player_detected(player: Node2D):
+	startAggro(player)
 
 # Player lost, return to original state
-func _on_gamesense_body_exited(_player: Node2D):
-	stopChase()
+func _on_player_lost(_player: Node2D):
+	stopAggro()
+
+# Something is too close, add body to list
+func _new_too_close_body(too_close_body: Node2D):
+	if too_close_body == self or too_close_body in too_close_bodies:
+		return
+	too_close_bodies.append(too_close_body)
+
+# Something is no longer too close, remove body from list
+func _remove_too_close_body(too_close_body: Node2D):
+	if too_close_body in too_close_bodies:
+		too_close_bodies.erase(too_close_body)
+
+# Player is in melee range, explode
+func _on_player_in_melee_range(_player: Node2D):
+	call_deferred("explode") # Can't create explosions mid-physics step

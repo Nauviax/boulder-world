@@ -2,6 +2,7 @@
 
 [ext_resource type="SpriteFrames" uid="uid://dwj025sx2exjc" path="res://entity/enemy/enemy_basic_purple_frames.tres" id="1_8vdsg"]
 [ext_resource type="Script" uid="uid://bjahk5c3nase3" path="res://entity/enemy/enemy_basic.gd" id="1_lvn57"]
+[ext_resource type="PackedScene" uid="uid://ckudutk6hsd6n" path="res://entity/explosion/explosion.tscn" id="2_xeb0k"]
 [ext_resource type="PackedScene" uid="uid://bhruvbuhbn430" path="res://effect/effect_spawner.tscn" id="3_pmu85"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_pshc1"]
@@ -10,11 +11,18 @@ radius = 20.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_g4v7s"]
 radius = 350.0
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_hor07"]
+radius = 75.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_xeb0k"]
+radius = 25.0
+
 [node name="EnemyBasic" type="CharacterBody2D" unique_id=1315167089]
 z_index = 10
 collision_layer = 8
 collision_mask = 46
 script = ExtResource("1_lvn57")
+explosion_scene = ExtResource("2_xeb0k")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1867915934]
 shape = SubResource("CircleShape2D_pshc1")
@@ -29,13 +37,34 @@ animation = &"idle"
 [node name="AboveEffectSpawner" parent="." unique_id=1953903136 instance=ExtResource("3_pmu85")]
 position = Vector2(0, -30)
 
-[node name="Gamesense" type="Area2D" parent="." unique_id=1744447542]
+[node name="PlayerDetector" type="Area2D" parent="." unique_id=1744447542]
 collision_layer = 0
 collision_mask = 4
+monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Gamesense" unique_id=894035273]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerDetector" unique_id=894035273]
 shape = SubResource("CircleShape2D_g4v7s")
 debug_color = Color(0, 1, 0.69803923, 0.078431375)
 
-[connection signal="body_entered" from="Gamesense" to="." method="_on_gamesense_body_entered"]
-[connection signal="body_exited" from="Gamesense" to="." method="_on_gamesense_body_exited"]
+[node name="TooCloseDetector" type="Area2D" parent="." unique_id=807262226]
+collision_layer = 0
+collision_mask = 10
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TooCloseDetector" unique_id=2101145783]
+shape = SubResource("CircleShape2D_hor07")
+debug_color = Color(0, 1, 0.69803923, 0.078431375)
+
+[node name="PlayerDeathArea" type="Area2D" parent="." unique_id=390818909]
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerDeathArea" unique_id=1910611321]
+shape = SubResource("CircleShape2D_xeb0k")
+debug_color = Color(1, 0, 0, 0.078431375)
+
+[connection signal="body_entered" from="PlayerDetector" to="." method="_on_player_detected"]
+[connection signal="body_exited" from="PlayerDetector" to="." method="_on_player_lost"]
+[connection signal="body_entered" from="TooCloseDetector" to="." method="_new_too_close_body"]
+[connection signal="body_exited" from="TooCloseDetector" to="." method="_remove_too_close_body"]
+[connection signal="body_entered" from="PlayerDeathArea" to="." method="_on_player_in_melee_range"]

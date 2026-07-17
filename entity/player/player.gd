@@ -1,6 +1,8 @@
 extends CharacterBody2D
 class_name Player
 
+signal player_died
+
 @onready var body: Node2D = $Body # Anything that rotates with the character
 @onready var animation: AnimatedSprite2D = body.get_node("AnimatedSprite2D")
 @onready var interaction: Area2D = body.get_node("InteractionArea")
@@ -16,9 +18,10 @@ const FRICTION := 0.15 # % of speed lost each tick (60tps)
 const FASTMODE_MULT = 1.5 # Speed and throw mult during fastmode
 
 # Player throwing consts
-const THROW_DISTANCE := 600 # Pixels
-const THROW_AIR_TIME := 1.0 # Seconds
-const THROW_SPEED := THROW_DISTANCE / THROW_AIR_TIME
+const THROW_DISTANCE := 500.0 # Pixels
+const THROW_SPEED := 450.0 # Pixels per second
+const THROW_DAMAGE_MODIFIER = 0.5 # Player throw stats are worse than a turret
+const THROW_RADIUS_MODIFIER = 0.75
 
 # Player state
 var control_enabled := false # Whether the player currently responds to input
@@ -34,14 +37,15 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	# Keyboard input
 	var input_dir: Vector2 = Vector2.ZERO
-	if Input.is_action_pressed("move_up"):
-		input_dir.y -= 1
-	if Input.is_action_pressed("move_down"):
-		input_dir.y += 1
-	if Input.is_action_pressed("move_left"):
-		input_dir.x -= 1
-	if Input.is_action_pressed("move_right"):
-		input_dir.x += 1
+	if control_enabled: # Only respond to input if player is in control
+		if Input.is_action_pressed("move_up"):
+			input_dir.y -= 1
+		if Input.is_action_pressed("move_down"):
+			input_dir.y += 1
+		if Input.is_action_pressed("move_left"):
+			input_dir.x -= 1
+		if Input.is_action_pressed("move_right"):
+			input_dir.x += 1
 
 	# Misc calculations
 	var speed_mult = FASTMODE_MULT if fastmode else 1.0
@@ -71,9 +75,15 @@ func _physics_process(_delta: float) -> void:
 
 # Player input controls (non-movement)
 func _input(event: InputEvent) -> void:
+	if not control_enabled:
+		return # Ignore input if player is not in control
 	if event.is_action_pressed("interact"): # Space
 		if held_item:
-			drop()
+			# Throw held item if moving. Drop held item if stationary
+			if last_dir_input != Vector2.ZERO:
+				throw()
+			else:
+				drop()
 		else:
 			# Check for items in reach
 			var bodies: Array = interaction.get_overlapping_bodies()
@@ -91,15 +101,19 @@ func pickup(item: Interactable):
 		animation.play("hold")
 		held_item.pickup(holdingNode, pickupNode.position)
 
-# Throw held item if moving. Drop held item if stationary
+# Drop held item
 func drop():
 	if held_item:
 		animation.play("drop")
-		if last_dir_input != Vector2.ZERO:
-			var speed_mult = FASTMODE_MULT if fastmode else 1.0
-			held_item.throw(position + last_dir_input * THROW_DISTANCE * speed_mult, THROW_SPEED * speed_mult)
-		else:
-			held_item.drop(pickupNode.global_position)
+		held_item.drop(pickupNode.global_position)
+		held_item = null
+
+# Throw held item in direction of last movement input
+func throw():
+	if held_item:
+		animation.play("drop")
+		var speed_mult = FASTMODE_MULT if fastmode else 1.0
+		held_item.throw(position + last_dir_input * THROW_DISTANCE * speed_mult, THROW_SPEED * speed_mult, self)
 		held_item = null
 
 # Handle specific effects based on animation frames
@@ -107,3 +121,11 @@ func _on_animation_frame_changed() -> void:
 	if animation.animation == "hold" and animation.frame == 1:
 		if held_item:
 			held_item.position = Vector2.ZERO # Center held item at end of animation
+
+# ===== #
+
+# On damage, just die. Player effectively has 1hp.
+func apply_damage(_damage: int) -> void:
+	drop() # Drop held item, if any
+	control_enabled = false
+	emit_signal("player_died") # Level should handle removing the player as-needed
