@@ -1,6 +1,10 @@
 extends Node2D
 class_name LevelScene
 
+signal set_background_music(music: AudioStream)
+signal game_over # !!! NYI, show game over menu
+
+# Scene references for spawning
 @export var player_scene: PackedScene
 @export var boulder_scene: PackedScene
 @export var explosion_scene: PackedScene
@@ -8,10 +12,16 @@ class_name LevelScene
 @export var enemy_basic_scene: PackedScene
 @export var enemy_cart_scene: PackedScene
 
+# Music references for playing audio
+@export var castle_song: AudioStream
+@export var battle_song: AudioStream
+@export var death_song: AudioStream
+
 @onready var effect_spawner: EffectSpawner = $EffectSpawner
 
 # Initial spawns of various items
 const PLAYER_SPAWN_POS := Vector2(200, 540)
+const PLAYER_RESPAWN_DELAY := 1.0 # Delay in seconds before respawning player after death
 const INIT_BOULDER_POS := Vector2(100, 540)
 const ENEMY_SPAWN_POS := Vector2(1900, 540)
 const ENEMY_SPAWN_Y_VARIANCE := 300
@@ -20,6 +30,9 @@ const ENEMY_SPAWN_Y_VARIANCE := 300
 const COIN_GUARANTEED_COUNT = 3 # Coins are guaranteed to drop if there are less than this many coins on the map.
 const COIN_SPAWN_PENALTY = 0.2 # Each coin on map past guaranteed count reduces chance of further coins by this much. (Additive)
 
+# Game initial state consts
+const INITIAL_LIVES = 3 # Number of lives the player starts with. Lost when player or castle takes damage.
+
 # References to game entities, for convenience
 var player: Player
 var boulders: Array[Boulder] = []
@@ -27,11 +40,32 @@ var enemies: Array[Enemy] = []
 var coins: Array[Coin] = []
 
 # Game state
-var coin_count: int = 0 # Number of coins collected by the player
+var lives_left: int = -1 # Number of lives the player has left
+var coin_count: int = -1 # Number of coins collected by the player
 
-# !!! Debugging, game should not do things on ready for now.
-func _ready():
-	# Testing boulders, this is temporary code. (!!!)
+# Prepare game, cleaning up old entities, resetting scores, and spawning initial entities.
+func prepare_game():
+	set_background_music.emit(castle_song)
+	# Reset game state
+	lives_left = INITIAL_LIVES
+	coin_count = 0
+	if player: # !!! This cleanup may not be needed, I may just remove the whole level node and re-create it !!!
+		player.queue_free()
+		player = null
+	for boulder in boulders:
+		boulder.queue_free()
+	boulders.clear()
+	for enemy in enemies:
+		enemy.queue_free()
+	enemies.clear()
+	for coin in coins:
+		coin.queue_free()
+	coins.clear()
+	# Initial spawns
+	spawn_player(false) # Spawn player, but do not give control yet
+	spawn_boulder()
+
+	# !!! Testing boulders, this is temporary code. (!!!)
 	var center := Vector2(50, 540)
 	var spacing := 128.0
 	var types := [
@@ -45,15 +79,6 @@ func _ready():
 	for ii in types.size():
 		spawn_boulder(Vector2(center.x, start_y + ii * spacing), types[ii])
 
-# Prepare game, cleaning up old entities, resetting scores, and spawning initial entities.
-func prepare_game():
-	# Initial spawns
-	spawn_player(false) # Spawn player, but do not give control yet
-	spawn_boulder()
-
-	# Reset game state
-	coin_count = 0
-
 	# !!! TODO spawn initial wave and have them rally
 	
 	# !!! TEMP (First wave should be spawned by wave logic, not here. Prepare should still rally the first wave.)
@@ -65,6 +90,7 @@ func prepare_game():
 
 # Start game, enabling player control and (!!!) enemies + wave logic
 func start_game():
+	set_background_music.emit(battle_song)
 	player.control_enabled = true
 	
 	# !!! TODO start the rallying wave, show initial wave title, and kick off game loop
@@ -142,9 +168,14 @@ func _on_enemy_died(enemy: Enemy):
 # Handle player death
 func _on_player_died():
 	remove_child(player) # Do not delete player, it may still be referenced
-	# !!! TODO lives logic. For now just respawn player after a second.
-	await get_tree().create_timer(1.0).timeout
-	spawn_player(true)
+	lives_left -= 1
+	if lives_left <= 0: # Game over, show game over screen and reset game
+		# !!! TODO game over logic
+		set_background_music.emit(death_song)
+		game_over.emit() # Show game over menu
+	else: # Respawn player after a delay
+		await get_tree().create_timer(PLAYER_RESPAWN_DELAY).timeout
+		spawn_player(true)
 
 # Handle coin collection
 func _on_coin_collected(coin: Coin):

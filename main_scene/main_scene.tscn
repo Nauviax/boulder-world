@@ -13,3 +13,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+
+[node name="BackgroundMusic" type="AudioStreamPlayer" parent="." unique_id=1971873869]
+
+[connection signal="set_background_music" from="LevelScene" to="." method="play_background_music"]
