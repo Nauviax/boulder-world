@@ -16,12 +16,16 @@ const MAX_SPEED := 1024 # Max speed assuming no FRICTION.
 const ACCELERATION := 0.1 # % of remaining speed added each tick. (Remaining being max - current)
 const FRICTION := 0.15 # % of speed lost each tick (60tps)
 const FASTMODE_MULT = 1.5 # Speed and throw mult during fastmode
+const BASE_STUN_DURATION := 1.0 # Base stun duration. Player doesn't take damage, so this is only for stun-specific effects.
 
 # Player throwing consts
 const THROW_DISTANCE := 500.0 # Pixels
 const THROW_SPEED := 450.0 # Pixels per second
 const THROW_DAMAGE_MODIFIER = 0.5 # Player throw stats are worse than a turret
 const THROW_RADIUS_MODIFIER = 0.75
+
+# Player misc consts
+const HEALTH := 10 # Player "health". Player dies whenever it takes more than this amount of damage, otherwise it is ignored
 
 # Player state
 var control_enabled := false # Whether the player currently responds to input
@@ -30,11 +34,11 @@ var held_item: Interactable = null
 var last_dir_input := Vector2.ZERO # Used for throwing direction
 
 # Connect internal signals
-func _ready() -> void:
+func _ready():
 	animation.frame_changed.connect(_on_animation_frame_changed)
 
 # Player movement
-func _physics_process(_delta: float) -> void:
+func _physics_process(_delta: float):
 	# Keyboard input
 	var input_dir: Vector2 = Vector2.ZERO
 	if control_enabled: # Only respond to input if player is in control
@@ -74,7 +78,7 @@ func _physics_process(_delta: float) -> void:
 	move_and_slide()
 
 # Player input controls (non-movement)
-func _input(event: InputEvent) -> void:
+func _input(event: InputEvent):
 	if not control_enabled:
 		return # Ignore input if player is not in control
 	if event.is_action_pressed("interact"): # Space
@@ -117,15 +121,21 @@ func throw():
 		held_item = null
 
 # Handle specific effects based on animation frames
-func _on_animation_frame_changed() -> void:
+func _on_animation_frame_changed():
 	if animation.animation == "hold" and animation.frame == 1:
 		if held_item:
 			held_item.position = Vector2.ZERO # Center held item at end of animation
 
 # ===== #
 
-# On damage, just die. Player effectively has 1hp.
-func apply_damage(_damage: int) -> void:
-	drop() # Drop held item, if any
-	control_enabled = false
-	emit_signal("player_died") # Level should handle removing the player as-needed
+# On damage, die if damage exceeds health const. Otherwise just apply stun as needed.
+func apply_damage(damage: int, extra_stun: float = 0.0):
+	if damage >= HEALTH:
+		drop() # Drop held item, if any
+		control_enabled = false
+		player_died.emit()
+	elif extra_stun > 0.0:
+		# Simple stun, don't bother with accounting for multiple hits.
+		control_enabled = false
+		await get_tree().create_timer(extra_stun * BASE_STUN_DURATION).timeout
+		control_enabled = true

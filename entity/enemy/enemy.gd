@@ -1,6 +1,7 @@
 extends CharacterBody2D
 class_name Enemy
 
+signal create_explosion(position: Vector2)
 signal enemy_died(enemy: Enemy)
 
 @onready var body: Node2D = $Body # Anything that rotates with the character
@@ -17,7 +18,7 @@ var rally_speed_mult: float = 2 # Multiplier to base speed when rallying
 var aggro_speed_mult: float = 2.5 # Multiplier to base speed when aggro-ed on the player
 var base_health: int = 100 # Max health, not current health
 var avoidance_speed: float = 20.0 # Speed to move away from other bodies when too close
-var max_stun_duration: float = 2.0 # Max duration of stun, if taking 100% damage in one hit. (Ignoring the fact this would kill)
+var base_stun_duration: float = 2.0 # Stun duration in seconds for a hit that would do 100% of this enemies health. (50% health is half, etc)
 
 # Enemy state (common to all enemies)
 enum EnemyState { JUSTSPAWNED, RALLYING, CHARGING, AGGRO, STUNNED, DOOMED, DEAD } # !!! Investigate state machine nodes?
@@ -27,6 +28,7 @@ var rally_pos := RALLY_X_POS
 var aggro_target: Node2D = null # Player to aggro, if any
 var health: int = base_health # Current health, starts at max
 var too_close_bodies: Array[Node2D] = [] # Bodies that are too close to this enemy, for collision avoidance
+var stun_timer: Timer = null # Timer for stun duration, if any is active
 
 # Move towards rally point and wait
 func startRally():
@@ -49,14 +51,25 @@ func startAggro(target: Node2D):
 
 # Stop aggro on the player, return to desired state
 func stopAggro():
-	state = desired_state
-	aggro_target = null
+	if state == EnemyState.AGGRO:
+		state = desired_state
+	aggro_target = null # Clear target even if currently stunned etc.
 
 # Stun the enemy for the given duration, often due to taking damage.
 func stun(duration: float):
 	state = EnemyState.STUNNED
 	animation.play("hide")
-	await get_tree().create_timer(duration).timeout
+	if stun_timer == null:
+		stun_timer = Timer.new()
+		stun_timer.one_shot = true
+		stun_timer.timeout.connect(clear_stun)
+		add_child(stun_timer)
+	stun_timer.wait_time = stun_timer.time_left + duration # Time left is 0 if this is first stun
+	stun_timer.start()
+
+# Clear stun and stun timer. (Called via timer, not directly)
+func clear_stun():
+	stun_timer = null
 	state = EnemyState.AGGRO if aggro_target != null else desired_state # Potentially resume aggro
 	animation.play("idle") # !!! It may be better to seperate state and animation state from this node? !!!
 
@@ -66,20 +79,31 @@ func doom():
 	animation.play("hide")
 	# !!! TODO show a temporary alert sprite !!!
 
-# Take damage, and die if health reaches 0
-func apply_damage(damage: float):
-	var stun_duration = (damage / base_health) * max_stun_duration
+# Explode at enemies position, killing this enemy.
+func explode():
+	state = EnemyState.DEAD
+	create_explosion.emit(position) # Default explosion stats
+	die() # Ensure enemy is killed at end of explosion, even if it would normally survive.
+
+# Handle death of enemy
+func die():
+	health = 0 # Just in case
+	state = EnemyState.DEAD
+	enemy_died.emit(self)
+
+# Take damage, and die if health reaches 0. Extra_stun is based on base_stun_duration.
+func apply_damage(damage: float, extra_stun: float = 0.0):
 	health -= int(damage)
 	if health <= 0:
-		emit_signal("enemy_died", self)
-		queue_free() # Remove enemy from scene. (!!! THIS IS TEMP BEFORE I GET SIGNALS WORKING)
+		die()
 	else: # Simply freeze enemy for short duration if not dead
-		stun(stun_duration)
+		var stun_amount = (damage / base_health) + extra_stun
+		stun(stun_amount * base_stun_duration)
 
 # ===== #
 
 # On tick logic for each state
-func _physics_process(_delta: float) -> void:
+func _physics_process(_delta: float):
 	match state:
 		EnemyState.RALLYING:
 			rally_tick()

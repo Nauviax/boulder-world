@@ -19,6 +19,8 @@ var last_throw_target: Vector2 = Vector2.ZERO # For re-throwing, if needed
 var last_throw_vector: Vector2 = Vector2.ZERO # For re-throwing, if needed
 var last_throw_speed: float = 0.0 # For re-throwing, if needed
 
+# Pickup, drop and throw to be called by holder/thrower.
+
 func pickup(holder: Node2D, offset: Vector2 = Vector2.ZERO):
 	if in_air: return # Shouldn't happen, but just in case
 	is_held = true
@@ -32,6 +34,8 @@ func drop(drop_pos: Vector2, restore_collision: bool = true):
 	collision_layer = init_collision_layer if restore_collision else 0
 	reparent(level_scene, false)
 	position = drop_pos # Theoretically, position == global_position here
+	if restore_collision:
+		settled() # NOT settled if restore_collision is false, as it is likely about to be thrown.
 
 # Animate from current position to target position
 func throw(target_pos: Vector2, speed: float, thrower: Node2D):
@@ -72,11 +76,18 @@ func throw(target_pos: Vector2, speed: float, thrower: Node2D):
 	else:
 		land()
 
-# Called when landing, should be overridden if extra logic should run
+# ===== Internal logic below ===== #
+
+# Called when landing, should be overridden by the interactable if extra logic should run
 func land():
 	in_air = false
 	collision_layer = init_collision_layer
 	z_index = init_z_index
+	settled()
+
+# Called at the end of drop or throw/land. No logic by default here, but can be overridden by the interactable.
+func settled():
+	pass
 
 # Calculate a new position to throw to, based on last throw
 func rethrow(distance_mult: float, speed_mult: float, use_horizontal_offset: bool):
