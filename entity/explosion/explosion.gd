@@ -10,6 +10,7 @@ const SPRITE_SCALE_FACTOR: float = 4.0 / 100.0 # Scale factor for the explosion 
 
 var explosion_damage: float = 100.0 # Enough to kill a basic enemy
 var explosion_radius: float = 100.0
+var explosion_extra_stun: float = 0.0 # Extra stun duration applied in addition to damage-stun, based on their base_stun_duration
 
 # Onready, get all colliding bodies in the damage area and apply damage to them
 func _ready():
@@ -19,7 +20,7 @@ func _ready():
 	await get_tree().physics_frame # !!! MAX investigate if there is better way (Wait for a diff signal? Don't use _ready()? !!!)
 	var colliding_bodies = damage_area.get_overlapping_bodies()
 	for body in colliding_bodies:
-		body.apply_damage(explosion_damage) # Area should only contain damagable bodies
+		body.apply_damage(explosion_damage, explosion_extra_stun) # Area should only contain damagable bodies
 	damage_area.monitoring = false # Finished with area
 	# Schedule the explosion to be removed after the duration
 	await get_tree().create_timer(EXPLOSION_DURATION).timeout

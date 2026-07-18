@@ -22,7 +22,6 @@ z_index = 10
 collision_layer = 8
 collision_mask = 46
 script = ExtResource("1_lvn57")
-explosion_scene = ExtResource("2_xeb0k")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1867915934]
 shape = SubResource("CircleShape2D_pshc1")

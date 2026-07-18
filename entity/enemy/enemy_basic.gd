@@ -1,8 +1,6 @@
 extends Enemy
 class_name EnemyBasic
 
-@export var explosion_scene: PackedScene
-
 # Types of basic enemies
 enum EnemyType { BASIC, FAST }
 @export var enemy_type: EnemyType = EnemyType.BASIC
@@ -64,13 +62,6 @@ func _ready():
 		await get_tree().create_timer(delay).timeout
 		above_effect_spawner.create_floating_text(FloatingText.TextType.Small, "TEST MESSAGE SMALL REPEATING")
 
-# This enemy will explode when near the player, likely killing both the player and itself. (100dmg explosion by default)
-func explode():
-	var explosion := explosion_scene.instantiate() as Explosion
-	explosion.position = position
-	get_parent().add_child(explosion)
-	state = EnemyState.DEAD
-
 # ===== #
 
 # Player detected, start charging towards player
@@ -92,6 +83,6 @@ func _remove_too_close_body(too_close_body: Node2D):
 	if too_close_body in too_close_bodies:
 		too_close_bodies.erase(too_close_body)
 
-# Player is in melee range, explode
+# Player is in melee range. Explode, killing both the player and itself. (100dmg explosion by default)
 func _on_player_in_melee_range(_player: Node2D):
 	call_deferred("explode") # Can't create explosions mid-physics step

@@ -7,6 +7,7 @@ enum EnemyType { BASIC }
 
 # Note that this enemy does NOT rotate.
 func _ready():
+	base_stun_duration /= 2 # Cart enemies are less affected by stun
 	match enemy_type:
 		EnemyType.BASIC:
 			base_speed /= 2 # Half speed of base enemy

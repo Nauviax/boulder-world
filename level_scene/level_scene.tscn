@@ -4,7 +4,9 @@
 [ext_resource type="PackedScene" uid="uid://ckc6x62sbj681" path="res://entity/boulder/boulder.tscn" id="2_d0ast"]
 [ext_resource type="TileSet" uid="uid://x5ico26dg14" path="res://resources/tiles/tile_set.tres" id="3_k54q2"]
 [ext_resource type="PackedScene" uid="uid://dq6bqt7363tj" path="res://entity/environment/castle.tscn" id="4_kh4cj"]
+[ext_resource type="PackedScene" uid="uid://ckudutk6hsd6n" path="res://entity/explosion/explosion.tscn" id="4_o4p60"]
 [ext_resource type="Texture2D" uid="uid://dkev37iv3iejy" path="res://resources/environment/Forest.png" id="5_bbe2h"]
+[ext_resource type="PackedScene" uid="uid://bigwu5x1owfcv" path="res://entity/coin/coin.tscn" id="5_bv0lf"]
 [ext_resource type="PackedScene" uid="uid://cykew5dgapiq2" path="res://entity/enemy/enemy_cart.tscn" id="5_ftmae"]
 [ext_resource type="PackedScene" uid="uid://bhruvbuhbn430" path="res://effect/effect_spawner.tscn" id="6_pt6tg"]
 [ext_resource type="PackedScene" uid="uid://2nihqajv4pmu" path="res://entity/player/player.tscn" id="7_3cxh4"]
@@ -25,6 +27,8 @@ normal = Vector2(-1, 0)
 script = ExtResource("1_08e0v")
 player_scene = ExtResource("7_3cxh4")
 boulder_scene = ExtResource("2_d0ast")
+explosion_scene = ExtResource("4_o4p60")
+coin_scene = ExtResource("5_bv0lf")
 enemy_basic_scene = ExtResource("8_7mopp")
 enemy_cart_scene = ExtResource("5_ftmae")
 

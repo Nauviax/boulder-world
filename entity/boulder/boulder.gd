@@ -1,7 +1,7 @@
 extends Interactable # StaticBody2D
 class_name Boulder
 
-@export var explosion_scene: PackedScene
+signal create_explosion(position: Vector2, damage: float, radius: float)
 
 # Type of boulder, determines color and landing effects
 enum Type { BASIC, RED, GREEN, BLUE, YELLOW }
@@ -25,13 +25,14 @@ const BASE_EXPLOSION_RADIUS: float = 100.0 # Radius of the explosion effect when
 var explode_on_land: bool = true # Whether the boulder explodes on landing at all
 var explosion_damage: float = BASE_EXPLOSION_DAMAGE
 var explosion_radius: float = BASE_EXPLOSION_RADIUS
+var explosion_extra_stun: float = 0.0 # Extra stun duration applied in addition to damage-stun, based on their base_stun_duration
 var explosions_this_throw: int = -1 # Track how many explosions have occurred for this throw, as specific boulders may re-throw
 
-func _ready() -> void:
+func _ready():
 	update_type()
 
 # Called automatically on type update, or on ready.
-func update_type() -> void:
+func update_type():
 	match _type:
 		Type.BASIC:
 			sprite.modulate = Color.DARK_GRAY
@@ -42,8 +43,11 @@ func update_type() -> void:
 		Type.GREEN: # No explosion (Mostly for debug !!!)
 			sprite.modulate = Color.GREEN
 			explode_on_land = false # Green boulders do not explode on landing (!!! MAY BE TEMP)
-		Type.BLUE: # Very large radius, but low damage. Very large stun duration. (!!! NYI)
+		Type.BLUE: # Very large radius, but no damage. Very large stun duration.
 			sprite.modulate = Color.AQUA
+			explosion_damage = 0.0
+			explosion_radius = BASE_EXPLOSION_RADIUS * 3.0
+			explosion_extra_stun = 5.0 # !!! May want to make this explosion blue?
 		Type.YELLOW: # Bouncy, re-throws on landing multiple times
 			sprite.modulate = Color.YELLOW
 
@@ -61,13 +65,12 @@ func land():
 	super.land() # Perform base landing logic first
 	if explode_on_land:
 		explosions_this_throw += 1
-		var explosion: Explosion = explosion_scene.instantiate() as Explosion
-		explosion.position = position
-		explosion.explosion_damage = explosion_damage * last_thrower.THROW_DAMAGE_MODIFIER
-		explosion.explosion_radius = explosion_radius * last_thrower.THROW_RADIUS_MODIFIER
+		var calculated_damage = explosion_damage * last_thrower.THROW_DAMAGE_MODIFIER
+		var calculated_radius = explosion_radius * last_thrower.THROW_RADIUS_MODIFIER
+		var calculated_extra_stun = explosion_extra_stun * last_thrower.THROW_DAMAGE_MODIFIER
 		if type == Type.YELLOW: # Yellow boulders re-throw on landing, up to 3 times
-			explosion.explosion_damage /= explosions_this_throw # Reduce damage for re-throws (1.0, 0.5, 0.33)
-			explosion.explosion_radius /= explosions_this_throw # Reduce radius for re-throws
+			calculated_damage /= explosions_this_throw # Reduce damage for re-throws (1.0, 0.5, 0.33)
+			calculated_radius /= explosions_this_throw # Reduce radius for re-throws
 			if explosions_this_throw < 3:
 				rethrow(0.33, 0.33, false) # Re-throw at 1/3 distance and speed, in same direction
-		level_scene.add_child(explosion)
+		create_explosion.emit(position, calculated_damage, calculated_radius, calculated_extra_stun)
