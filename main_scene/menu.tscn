@@ -1,0 +1,109 @@
+[gd_scene format=3 uid="uid://bja0oo03bje7u"]
+
+[ext_resource type="Script" uid="uid://ilq8ulmwl5e1" path="res://main_scene/menu.gd" id="1_e03ww"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_g4v7s"]
+font_size = 128
+
+[sub_resource type="LabelSettings" id="LabelSettings_yf5fn"]
+
+[node name="Menu" type="CenterContainer" unique_id=1033705935]
+z_index = 1000
+custom_minimum_size = Vector2(1920, 1080)
+offset_right = 1920.0
+offset_bottom = 1080.0
+script = ExtResource("1_e03ww")
+
+[node name="MenuItems" type="VBoxContainer" parent="." unique_id=2074153796]
+custom_minimum_size = Vector2(1920, 1080)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TopRow" type="HBoxContainer" parent="MenuItems" unique_id=797681720]
+layout_mode = 2
+alignment = 2
+
+[node name="Fullscreen" type="Button" parent="MenuItems/TopRow" unique_id=1609846342]
+layout_mode = 2
+text = "Fullscreen"
+
+[node name="Exit" type="Button" parent="MenuItems/TopRow" unique_id=1751709907]
+layout_mode = 2
+text = "Exit"
+
+[node name="Title" type="Label" parent="MenuItems" unique_id=1433293818]
+layout_mode = 2
+size_flags_vertical = 6
+size_flags_stretch_ratio = 4.0
+text = "Boulder World"
+label_settings = SubResource("LabelSettings_g4v7s")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="MenuItems" unique_id=1864173718]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 3.0
+alignment = 1
+
+[node name="HowToPlay" type="Button" parent="MenuItems/Buttons" unique_id=1620491701]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "How to Play"
+
+[node name="Play" type="Button" parent="MenuItems/Buttons" unique_id=1201553435]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Start Game"
+
+[node name="Settings" type="MenuButton" parent="MenuItems/Buttons" unique_id=1957945702]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Settings"
+item_count = 1
+popup/item_0/text = "Test Setting"
+popup/item_0/checkable = 1
+popup/item_0/id = 0
+
+[node name="BestScore" type="Label" parent="MenuItems" unique_id=1581862871]
+layout_mode = 2
+size_flags_vertical = 6
+text = "Best Wave: xx"
+label_settings = SubResource("LabelSettings_yf5fn")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ExtensiveCredits" type="Label" parent="MenuItems" unique_id=1870138227]
+layout_mode = 2
+size_flags_vertical = 6
+text = "Made by Max"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GameOverItems" type="VBoxContainer" parent="." unique_id=1825874178]
+visible = false
+layout_mode = 2
+
+[node name="GameOver" type="Label" parent="GameOverItems" unique_id=1527308877]
+layout_mode = 2
+text = "Game Over"
+
+[node name="Buttons" type="HBoxContainer" parent="GameOverItems" unique_id=994202272]
+layout_mode = 2
+
+[node name="BackToMenu" type="Button" parent="GameOverItems/Buttons" unique_id=399147878]
+layout_mode = 2
+text = "Return to menu"
+
+[node name="BlackFade" type="ColorRect" parent="." unique_id=377932017]
+z_index = -10
+custom_minimum_size = Vector2(1920, 1080)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.39215687)
+
+[connection signal="pressed" from="MenuItems/TopRow/Fullscreen" to="." method="_on_fullscreen_pressed"]
+[connection signal="pressed" from="MenuItems/TopRow/Exit" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="MenuItems/Buttons/Play" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="GameOverItems/Buttons/BackToMenu" to="." method="_on_back_to_menu_pressed"]

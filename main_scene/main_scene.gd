@@ -1,27 +1,30 @@
 extends Node2D
 
 @onready var level_scene: LevelScene = $LevelScene
-@onready var menu: Control = $Menu
+@onready var menu: Menu = $Menu
 
-# Music (!!! MAY MOVE LATER)
+# Music
 @onready var music_player: AudioStreamPlayer = $BackgroundMusic
 const FADE_DURATION: float = 0.5 # Duration of fade-out between tracks, in seconds
 var current_music_tween: Tween = null # Tween for fading between tracks
 
 # On load, show menu and prepare game
 func _ready():
-	menu.visible = true
+	new_game_prepare()
+
+# On first load, or game restart, prepare game and show menu
+func new_game_prepare():
+	menu.show_menu()
 	level_scene.prepare_game() # Rallies first wave early, but no player control or waves yet
 
-	# !!! DEBUGGING, game starts immediately anyway
-	level_scene.player.control_enabled = true # !!! BAD
-	await get_tree().create_timer(8.0).timeout
-	level_scene.start_game()
-
-# On start button pressed, hide menu and start game
-func _on_start_button_pressed():
-	menu.visible = false
+# On start button pressed, hide menu and start game. (Called from menu signal)
+func new_game_start():
+	menu.hide_menu()
 	level_scene.start_game() # Enables player control and starts wave logic (!!! First wave should still "rally" again)
+
+# On game over, show death menu
+func game_over():
+	menu.game_over_menu()
 
 # Play the specified music track. Fades between tracks as needed.	
 func play_background_music(new_track: AudioStream):

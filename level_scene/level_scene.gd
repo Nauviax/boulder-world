@@ -94,8 +94,9 @@ func start_game():
 	player.control_enabled = true
 	
 	# !!! TODO start the rallying wave, show initial wave title, and kick off game loop
-	# !!! In place of wave logic, just wait a few seconds then send off initial wave. (First wave is pre-spawned for menu)
-	await get_tree().create_timer(10.0).timeout
+	# !!! First wave should be pre-rallied, but on game start they should still "Rally" again before charging.
+	# !!! TEMP just charge immediately after a delay
+	await get_tree().create_timer(3.0).timeout
 	for enemy in enemies:
 		enemy.startCharge()
 	

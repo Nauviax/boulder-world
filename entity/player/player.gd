@@ -28,7 +28,8 @@ const THROW_RADIUS_MODIFIER = 0.75
 const HEALTH := 10 # Player "health". Player dies whenever it takes more than this amount of damage, otherwise it is ignored
 
 # Player state
-var control_enabled := false # Whether the player currently responds to input
+var control_enabled := false # Whether the player currently responds to input and can take damage.
+var player_stunned := false # Similar to above, but due to in-game effects (Also inverted)
 var fastmode := false # !!! TEMP, controls "prepare" movement
 var held_item: Interactable = null
 var last_dir_input := Vector2.ZERO # Used for throwing direction
@@ -41,7 +42,7 @@ func _ready():
 func _physics_process(_delta: float):
 	# Keyboard input
 	var input_dir: Vector2 = Vector2.ZERO
-	if control_enabled: # Only respond to input if player is in control
+	if control_enabled and !player_stunned: # Only respond to input if player can move
 		if Input.is_action_pressed("move_up"):
 			input_dir.y -= 1
 		if Input.is_action_pressed("move_down"):
@@ -79,8 +80,8 @@ func _physics_process(_delta: float):
 
 # Player input controls (non-movement)
 func _input(event: InputEvent):
-	if not control_enabled:
-		return # Ignore input if player is not in control
+	if !control_enabled or player_stunned:
+		return # Ignore input if player is not in control or is stunned
 	if event.is_action_pressed("interact"): # Space
 		if held_item:
 			# Throw held item if moving. Drop held item if stationary
@@ -130,12 +131,12 @@ func _on_animation_frame_changed():
 
 # On damage, die if damage exceeds health const. Otherwise just apply stun as needed.
 func apply_damage(damage: int, extra_stun: float = 0.0):
-	if damage >= HEALTH:
+	if damage >= HEALTH and control_enabled:
 		drop() # Drop held item, if any
-		control_enabled = false
+		control_enabled = false # Prevents input and other damage instances
 		player_died.emit()
 	elif extra_stun > 0.0:
 		# Simple stun, don't bother with accounting for multiple hits.
-		control_enabled = false
+		player_stunned = true
 		await get_tree().create_timer(extra_stun * BASE_STUN_DURATION).timeout
-		control_enabled = true
+		player_stunned = false

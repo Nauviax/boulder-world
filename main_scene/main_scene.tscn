@@ -2,18 +2,18 @@
 
 [ext_resource type="Script" uid="uid://dvqqx3yhh3tfv" path="res://main_scene/main_scene.gd" id="1_angbg"]
 [ext_resource type="PackedScene" uid="uid://dpqdp2tqs3dt6" path="res://level_scene/level_scene.tscn" id="2_nutp4"]
+[ext_resource type="PackedScene" uid="uid://bja0oo03bje7u" path="res://main_scene/menu.tscn" id="3_n0j53"]
 
 [node name="MainScene" type="Node2D" unique_id=900750043]
 script = ExtResource("1_angbg")
 
 [node name="LevelScene" parent="." unique_id=1388666685 instance=ExtResource("2_nutp4")]
 
-[node name="Menu" type="Control" parent="." unique_id=664963074]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
 [node name="BackgroundMusic" type="AudioStreamPlayer" parent="." unique_id=1971873869]
 
+[node name="Menu" parent="." unique_id=980159935 instance=ExtResource("3_n0j53")]
+
+[connection signal="game_over" from="LevelScene" to="." method="game_over"]
 [connection signal="set_background_music" from="LevelScene" to="." method="play_background_music"]
+[connection signal="reset_game_pressed" from="Menu" to="." method="new_game_prepare"]
+[connection signal="start_game_pressed" from="Menu" to="." method="new_game_start"]
