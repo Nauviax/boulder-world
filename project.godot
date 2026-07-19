@@ -13,15 +13,13 @@ config_version=5
 config/name="BoulderWorld"
 run/main_scene="uid://co24xdvw1okc"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+run/max_fps=60
 config/icon="res://icon.svg"
 
 [display]
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
-window/size/mode=3
-window/size/resizable=false
-window/size/borderless=true
 window/stretch/mode="viewport"
 
 [input]
