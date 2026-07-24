@@ -24,7 +24,7 @@ const PLAYER_SPAWN_POS := Vector2(200, 540)
 const PLAYER_RESPAWN_DELAY := 1.0 # Delay in seconds before respawning player after death
 const INIT_BOULDER_POS := Vector2(100, 540)
 const ENEMY_SPAWN_POS := Vector2(1900, 540)
-const ENEMY_SPAWN_Y_VARIANCE := 300
+const ENEMY_SPAWN_Y_VARIANCE := 350
 
 # Coin spawning consts
 const COIN_GUARANTEED_COUNT = 3 # Coins are guaranteed to drop if there are less than this many coins on the map.
@@ -82,9 +82,10 @@ func prepare_game():
 	# !!! TODO spawn initial wave and have them rally
 	
 	# !!! TEMP (First wave should be spawned by wave logic, not here. Prepare should still rally the first wave.)
-	spawn_enemy_basic(EnemyBasic.EnemyType.BASIC)
+	spawn_enemy(Enemy.Type.BASIC, Enemy.SubType.FAST)
+	spawn_enemy(Enemy.Type.CART, Enemy.SubType.BASIC)
 	for ii in range(10):
-		spawn_enemy_basic(EnemyBasic.EnemyType.FAST)
+		spawn_enemy(Enemy.Type.BASIC, Enemy.SubType.BASIC)
 	for enemy in enemies:
 		enemy.startRally()
 
@@ -131,17 +132,19 @@ func spawn_coin(spawn_pos: Vector2, guaranteed: bool):
 	add_child(coin)
 	coins.append(coin)
 
-func spawn_enemy_basic(type: EnemyBasic.EnemyType):
-	var enemy := enemy_basic_scene.instantiate() as EnemyBasic
+func spawn_enemy(type: Enemy.Type, sub_type: Enemy.SubType):
+	var enemy: Enemy = null
+	match type:
+		Enemy.Type.BASIC:
+			enemy = enemy_basic_scene.instantiate()
+		Enemy.Type.CART:
+			enemy = enemy_cart_scene.instantiate()
+	enemy.sub_type = sub_type
 	enemy.position = ENEMY_SPAWN_POS + Vector2(randi_range(-5, 5), randi_range(-ENEMY_SPAWN_Y_VARIANCE, ENEMY_SPAWN_Y_VARIANCE))
-	enemy.enemy_type = type
 	enemy.enemy_died.connect(_on_enemy_died)
 	enemy.create_explosion.connect(create_explosion)
 	add_child(enemy)
 	enemies.append(enemy)
-
-func spawn_enemy_cart():
-	pass # NYI
 
 # ===== Signals ===== #
 
@@ -182,3 +185,9 @@ func _on_player_died():
 func _on_coin_collected(coin: Coin):
 	coin.queue_free() # Remove coin from scene
 	coins.erase(coin)
+
+# ===== Wave logic ===== #
+
+func get_wave(wave_number: int) -> Array[Enemy]:
+	return [] # !!! TODO
+	# 

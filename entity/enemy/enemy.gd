@@ -9,16 +9,25 @@ signal enemy_died(enemy: Enemy)
 @onready var above_effect_spawner: EffectSpawner = $AboveEffectSpawner
 @onready var screen_size := get_viewport_rect().size # To avoid being pushed offscreen
 
-const RALLY_X_POS = 1550; # X coord that enemies try to rally at (!!! MAX TEST OVERCROUDING TOO)
+const RALLY_X_POS = 1550; # X coord that enemies try to rally at
 const RALLY_X_VARIANCE = 25; # Allow some enemies to move forwards more. Also acts as tolerance.
+
+# Enemy type (Not all combinations are valid!)
+enum Type { BASIC, CART }
+@export var type: Type = Type.BASIC # Set in editor
+enum SubType { BASIC, FAST }
+@export var sub_type: SubType = SubType.BASIC # Set in code, per instance
 
 # Base enemy variables; can be overridden by archetype
 var base_speed: float = 40.0 # Base speed of the enemy
 var rally_speed_mult: float = 2 # Multiplier to base speed when rallying
 var aggro_speed_mult: float = 2.5 # Multiplier to base speed when aggro-ed on the player
 var base_health: int = 100 # Max health, not current health
-var avoidance_speed: float = 20.0 # Speed to move away from other bodies when too close
 var base_stun_duration: float = 2.0 # Stun duration in seconds for a hit that would do 100% of this enemies health. (50% health is half, etc)
+var can_rotate: bool = true # Whether this enemy can rotate to face movement direction
+
+# Base enemy variables; set via code after archetype on-ready runs.
+var avoidance_speed: float # Speed to move away from other bodies when too close. Half of base_speed.
 
 # Enemy state (common to all enemies)
 enum EnemyState { JUSTSPAWNED, RALLYING, CHARGING, AGGRO, STUNNED, DOOMED, DEAD } # !!! Investigate state machine nodes?
@@ -26,9 +35,14 @@ var state: EnemyState = EnemyState.JUSTSPAWNED # Note that JUSTSPAWNED has no be
 var desired_state: EnemyState = EnemyState.JUSTSPAWNED # State to return to when losing sight of player or clearing stun
 var rally_pos := RALLY_X_POS
 var aggro_target: Node2D = null # Player to aggro, if any
-var health: int = base_health # Current health, starts at max
+var health: int # Current health, set to max on ready.
 var too_close_bodies: Array[Node2D] = [] # Bodies that are too close to this enemy, for collision avoidance
 var stun_timer: Timer = null # Timer for stun duration, if any is active
+
+# Prep variable initial values on ready, which should allow archetypes to override them before this runs.
+func _ready():
+	health = base_health
+	avoidance_speed = base_speed / 2 # Default to half of archetype base speed
 
 # Move towards rally point and wait
 func startRally():
@@ -117,18 +131,22 @@ func rally_tick():
 	var x_velocity: float = 0
 	if position.x > rally_pos + RALLY_X_VARIANCE: # Tolerance for jittering at rally point
 		x_velocity = -base_speed * rally_speed_mult
-		body.rotation = PI # Left
+		if can_rotate:
+			body.rotation = PI # Left
 	elif position.x < rally_pos - RALLY_X_VARIANCE:
 		x_velocity = base_speed * rally_speed_mult
-		body.rotation = 0 # Right
+		if can_rotate:
+			body.rotation = 0 # Right
 	else:
-		body.rotation = PI # Left
+		if can_rotate:
+			body.rotation = PI # Left
 	update_velocity(Vector2(x_velocity, 0))
 	move_and_slide()
 
 # Base logic for charging (Can be overridden by archetype)
 func charge_tick():
-	body.rotation = PI # Face direction of movement (Pre-slide and avoidance)
+	if can_rotate:
+		body.rotation = PI # Face direction of movement (Pre-slide and avoidance)
 	update_velocity(Vector2(-base_speed, 0))
 	move_and_slide()
 
@@ -136,7 +154,8 @@ func charge_tick():
 func aggro_tick():
 	if aggro_target:
 		var direction = (aggro_target.position - position).normalized()
-		body.rotation = direction.angle() # Face direction of movement (Pre-slide and avoidance)
+		if can_rotate:
+			body.rotation = direction.angle() # Face direction of movement (Pre-slide and avoidance)
 		update_velocity(direction * base_speed * aggro_speed_mult)
 		move_and_slide()
 

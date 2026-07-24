@@ -1,30 +1,25 @@
 extends Enemy
 class_name EnemyBasic
 
-# Types of basic enemies
-enum EnemyType { BASIC, FAST }
-@export var enemy_type: EnemyType = EnemyType.BASIC
-
 const BASIC_ANIMATION_FRAMES := preload("res://entity/enemy/enemy_basic_purple_frames.tres")
 const FAST_ANIMATION_FRAMES := preload("res://entity/enemy/enemy_basic_red_frames.tres")
 
 # Prepare enemy
 func _ready():
-	match enemy_type:
-		EnemyType.BASIC:
+	match sub_type:
+		Enemy.SubType.BASIC:
 			animation.sprite_frames = BASIC_ANIMATION_FRAMES
 			base_health = 50 # Basic basic dies to a player throw. (!!! TODO HEALTHBARS !!!)
-			health = base_health
-		EnemyType.FAST:
+		Enemy.SubType.FAST:
 			animation.sprite_frames = FAST_ANIMATION_FRAMES
 			base_health = 75 # Still dies to player if red boulder, otherwise requires turret.
-			health = base_health
 			base_speed *= 1.5
+	super._ready() # Finalise base values
 	animation.play("idle")
 
 	# !!! DEBUGGING BELOW
 
-	if enemy_type != EnemyType.BASIC:
+	if sub_type == Enemy.SubType.BASIC:
 		return # Only debug for basic enemy type
 
 	var delay := 1.2
