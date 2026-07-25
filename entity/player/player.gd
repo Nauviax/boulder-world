@@ -95,10 +95,6 @@ func _input(event: InputEvent):
 			if bodies.size() > 0:
 				pickup(bodies[0]) # May not be closest. (This is fine)
 
-	elif event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_F:
-			fastmode = !fastmode # !!! THIS IS TEMPORARY
-
 # Pick up an item
 func pickup(item: Interactable):
 	if !held_item:
