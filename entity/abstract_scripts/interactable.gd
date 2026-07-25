@@ -8,7 +8,7 @@ class_name Interactable
 @onready var init_z_index = z_index # Bonus 50 added while in flight
 
 # Consts for modifying throw path
-const THROW_HEIGHT_FACTOR = 0.2 # Ratio h/d; 0.2 means height is 20% of throw distance.
+const THROW_HEIGHT_FACTOR = 0.15 # Ratio h/d; 0.15 means max "height" is 15% of throw distance.
 const THROW_SCALE_FACTOR = 0.5 # % of base scale when at peak of arc
 const THROW_INVALID_LAND_LAYER = 128 # Collision layer 8, for static objects that should cause a re-throw if landed on (Castle, etc)
 
@@ -67,14 +67,10 @@ func throw(target_pos: Vector2, speed: float, thrower: Node2D):
 	, 0.0, 1.0, duration)
 	await tween.finished
 	# Check for re-throw if inside a static object
-	var parameters = PhysicsPointQueryParameters2D.new()
-	parameters.position = position
-	parameters.collision_mask = THROW_INVALID_LAND_LAYER
-	var results = get_world_2d().direct_space_state.intersect_point(parameters, 1)
-	if not results.is_empty():
-		rethrow(0.5, 0.5, true) # Re-throw at half distance and half speed, in same direction
-	else:
+	if can_land_at_position(position):
 		land()
+	else:
+		rethrow(0.5, 0.5, true) # Re-throw at half distance and half speed, in same direction
 
 # ===== Internal logic below ===== #
 
@@ -110,3 +106,13 @@ func bounce_screen_edges(next_position: Vector2) -> Vector2:
 	elif next_position.y > screen_size.y:
 		next_position.y = screen_size.y - (next_position.y - screen_size.y)
 	return next_position
+
+# Helper function to determine if a position is save to land at
+func can_land_at_position(pos: Vector2) -> bool:
+	if pos.x < 0 or pos.x > screen_size.x or pos.y < 0 or pos.y > screen_size.y:
+		return false # Out of bounds is considered invalid
+	var parameters = PhysicsPointQueryParameters2D.new()
+	parameters.position = pos
+	parameters.collision_mask = THROW_INVALID_LAND_LAYER
+	var results = get_world_2d().direct_space_state.intersect_point(parameters, 1)
+	return results.is_empty()

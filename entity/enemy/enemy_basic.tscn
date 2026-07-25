@@ -2,7 +2,6 @@
 
 [ext_resource type="SpriteFrames" uid="uid://dwj025sx2exjc" path="res://entity/enemy/enemy_basic_purple_frames.tres" id="1_8vdsg"]
 [ext_resource type="Script" uid="uid://bjahk5c3nase3" path="res://entity/enemy/enemy_basic.gd" id="1_lvn57"]
-[ext_resource type="PackedScene" uid="uid://ckudutk6hsd6n" path="res://entity/explosion/explosion.tscn" id="2_xeb0k"]
 [ext_resource type="PackedScene" uid="uid://bhruvbuhbn430" path="res://effect/effect_spawner.tscn" id="3_pmu85"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_pshc1"]
@@ -20,7 +19,7 @@ radius = 25.0
 [node name="EnemyBasic" type="CharacterBody2D" unique_id=1315167089]
 z_index = 10
 collision_layer = 8
-collision_mask = 46
+collision_mask = 10
 script = ExtResource("1_lvn57")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1867915934]

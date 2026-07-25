@@ -95,10 +95,6 @@ func _input(event: InputEvent):
 			if bodies.size() > 0:
 				pickup(bodies[0]) # May not be closest. (This is fine)
 
-	elif event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_F:
-			fastmode = !fastmode # !!! THIS IS TEMPORARY
-
 # Pick up an item
 func pickup(item: Interactable):
 	if !held_item:
@@ -109,9 +105,13 @@ func pickup(item: Interactable):
 # Drop held item
 func drop():
 	if held_item:
-		animation.play("drop")
-		held_item.drop(pickupNode.global_position)
-		held_item = null
+		var drop_pos := pickupNode.global_position
+		if held_item.can_land_at_position(drop_pos):
+			animation.play("drop")
+			held_item.drop(pickupNode.global_position)
+			held_item = null
+		else: # Do not drop
+			above_effect_spawner.create_floating_text(FloatingText.Type.Medium, "No space to drop this")
 
 # Throw held item in direction of last movement input
 func throw():

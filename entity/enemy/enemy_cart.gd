@@ -1,18 +1,15 @@
 extends Enemy
 class_name EnemyCart
 
-# Types of cart enemies
-enum EnemyType { BASIC }
-@export var enemy_type: EnemyType = EnemyType.BASIC
-
 # Note that this enemy does NOT rotate.
 func _ready():
+	can_rotate = false # Cart enemies do not rotate
 	base_stun_duration /= 2 # Cart enemies are less affected by stun
-	match enemy_type:
-		EnemyType.BASIC:
+	match sub_type:
+		Enemy.SubType.BASIC:
 			base_speed /= 2 # Half speed of base enemy
 			base_health *= 3 # Triple health of base enemy
-			health = base_health # Set current health to max
+	super._ready() # Finalise base values
 	animation.play("idle")
 
 # Player detected, start shooting at player
