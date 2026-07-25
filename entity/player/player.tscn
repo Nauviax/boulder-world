@@ -46,4 +46,4 @@ shape = SubResource("RectangleShape2D_yf5fn")
 position = Vector2(-35, 0)
 
 [node name="AboveEffectSpawner" parent="." unique_id=145606412 instance=ExtResource("3_4pl66")]
-position = Vector2(-35, 0)
+position = Vector2(0, -35)

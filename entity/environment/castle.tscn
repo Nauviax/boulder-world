@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://dq6bqt7363tj"]
 
+[ext_resource type="Script" uid="uid://cmjs0om2gfkm2" path="res://entity/environment/castle.gd" id="1_6rhxi"]
 [ext_resource type="Texture2D" uid="uid://dkn05pn6w3vcp" path="res://resources/environment/Castle.png" id="1_q7215"]
+[ext_resource type="LabelSettings" uid="uid://dke1jh6wqxbc1" path="res://resources/ui/castle_label_settings.tres" id="2_6ufid"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bfjm1"]
 radius = 196.0
@@ -11,10 +13,13 @@ size = Vector2(194, 275)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_yf5fn"]
 size = Vector2(194, 206)
 
-[node name="Castle" type="StaticBody2D" unique_id=1100447753]
+[node name="Castle" type="StaticBody2D" unique_id=1100447753 node_paths=PackedStringArray("game_time_label", "coin_count_label")]
 z_index = 30
 collision_layer = 130
 collision_mask = 0
+script = ExtResource("1_6rhxi")
+game_time_label = NodePath("CastleText/VBoxContainer/GameTime")
+coin_count_label = NodePath("CastleText/VBoxContainer/CoinCount")
 
 [node name="CollisionTopCircle" type="CollisionShape2D" parent="." unique_id=1322720582]
 position = Vector2(0, -540)
@@ -42,3 +47,31 @@ shape = SubResource("RectangleShape2D_yf5fn")
 [node name="Castle" type="Sprite2D" parent="." unique_id=403472217]
 scale = Vector2(1.3506945, 1.3506942)
 texture = ExtResource("1_q7215")
+
+[node name="CastleText" type="Node2D" parent="." unique_id=322349343]
+position = Vector2(0, 450)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CastleText" unique_id=957084642]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -86.5
+offset_top = -57.0
+offset_right = 86.5
+offset_bottom = 57.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GameTime" type="Label" parent="CastleText/VBoxContainer" unique_id=1963376787]
+layout_mode = 2
+text = "00:00"
+label_settings = ExtResource("2_6ufid")
+horizontal_alignment = 1
+
+[node name="CoinCount" type="Label" parent="CastleText/VBoxContainer" unique_id=740379273]
+layout_mode = 2
+text = "Coins: 00"
+label_settings = ExtResource("2_6ufid")
+horizontal_alignment = 1

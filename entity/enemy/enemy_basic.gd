@@ -21,41 +21,10 @@ func _ready():
 
 	if sub_type == Enemy.SubType.BASIC:
 		return # Only debug for basic enemy type
-
-	var delay := 1.2
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.Small, "TEST MESSAGE SMALL")
-	await get_tree().create_timer(delay).timeout
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.Medium, "MEDIUM")
-	await get_tree().create_timer(delay).timeout
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.Large, "LARGE")
-	await get_tree().create_timer(delay).timeout
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.SubLarge, "Sub Large")
-	await get_tree().create_timer(delay).timeout
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.ExtraLarge, "EXTRA LARGE", Vector2(-564, 0))
-	await get_tree().create_timer(delay).timeout
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.SubExtraLarge, "Sub Extra", Vector2(-164, 0))
-	await get_tree().create_timer(delay).timeout
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.GameTimer, 0)
-	await get_tree().create_timer(delay).timeout
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.GracePeriodTimer, 70, Vector2(0, -64))
-	await get_tree().create_timer(delay).timeout
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.WaveTimer, 45, Vector2(164, 0))
-	await get_tree().create_timer(delay).timeout
-
-	above_effect_spawner.create_floating_text(FloatingText.TextType.SubWaveTimer, "WAVE TEXT", Vector2(364, 0))
-
+	var delay := 3
 	while true:
 		await get_tree().create_timer(delay).timeout
-		above_effect_spawner.create_floating_text(FloatingText.TextType.Small, "TEST MESSAGE SMALL REPEATING")
+		above_effect_spawner.create_floating_text(FloatingText.Type.Small, "TEST MESSAGE SMALL REPEATING")
 
 # ===== #
 

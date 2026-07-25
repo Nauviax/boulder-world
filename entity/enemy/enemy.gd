@@ -11,6 +11,7 @@ signal enemy_died(enemy: Enemy)
 
 const RALLY_X_POS = 1550; # X coord that enemies try to rally at
 const RALLY_X_VARIANCE = 25; # Allow some enemies to move forwards more. Also acts as tolerance.
+const ANIMATION_SPEED_VARIANCE = 0.1 # Random variance to animation speed, to avoid all enemies animating in sync
 
 # Enemy type (Not all combinations are valid!)
 enum Type { BASIC, CART }
@@ -53,6 +54,7 @@ var stun_timer: Timer = null # Timer for stun duration, if any is active
 func _ready():
 	health = base_health
 	avoidance_speed = base_speed / 2 # Default to half of archetype base speed
+	animation.speed_scale = 1.0 + randf_range(-ANIMATION_SPEED_VARIANCE, ANIMATION_SPEED_VARIANCE) # Avoid enemies animating in sync
 
 # Move towards rally point and wait
 func startRally():

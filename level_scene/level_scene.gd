@@ -1,8 +1,11 @@
 extends Node2D
 class_name LevelScene
 
+# Signals for communicating with main scene and UI elements
 signal set_background_music(music: AudioStream)
-signal game_over # !!! NYI, show game over menu
+signal game_over
+signal second_changed(minutes: int, seconds: int, game_seconds: int)
+signal coin_count_changed(new_count: int)
 
 # Scene references for spawning
 @export var player_scene: PackedScene
@@ -20,16 +23,17 @@ signal game_over # !!! NYI, show game over menu
 @onready var effect_spawner: EffectSpawner = $EffectSpawner
 @onready var next_sub_wave_timer: Timer = $SubWaveTimer # Timer for the current sub-wave. Can be stopped early if all existing enemies are defeated.
 
-# Initial spawns of various items
+# Initial spawns of various items (Assumes level is 1920x1080)
 const PLAYER_SPAWN_POS := Vector2(200, 540)
 const PLAYER_RESPAWN_DELAY := 1.0 # Delay in seconds before respawning player after death
 const INIT_BOULDER_POS := Vector2(100, 540)
 const ENEMY_SPAWN_POS := Vector2(1900, 540)
 const ENEMY_SPAWN_Y_VARIANCE := 350
+const LEVEL_CENTER := Vector2(960, 540) # Used for text mostly
 
 # Wave timing consts
 const ENEMY_RALLY_DURATION := 5.0 # Time in seconds that enemies will rally before charging the player
-const SUB_WAVE_DURATION := 15.0 # Time in seconds between a sub-wave charging and the next sub-wave rallying.
+const SUB_WAVE_DURATION := 5.0 # Time in seconds between a sub-wave charging and the next sub-wave rallying.
 const WAVE_PREP_DURATION := 15.0 # Time in seconds between beating a wave and the next wave starting
 
 # Coin spawning consts
@@ -53,13 +57,32 @@ var current_sub_wave: int = 0 # Current sub-wave number, starting at 0
 var current_wave_sub_wave_count: int = 0 # Number of sub-waves in the current wave
 var current_wave_spawn_defs: Array[Enemy.SpawnDef] = [] # Spawn defs for the current wave
 
+# Time tracking
+var game_active: bool = false # True when the game is active, false when in menu or game over
+var game_time: float = 0.0
+var last_reported_second: int = -1 # Updates timers each second
+
+# Advance game time and emit signal each second
+func _process(delta: float) -> void:
+	if game_active:
+		game_time += delta
+		var sec := int(game_time)
+		if sec != last_reported_second:
+			last_reported_second = sec
+			second_changed.emit(int(sec / 60.0), sec % 60, sec)
+
 # Prepare game, cleaning up old entities, resetting scores, and manually rallying the initial wave.
 func prepare_game():
 	set_background_music.emit(castle_song)
-	# Reset game state # !!! See below "!!!"
+	# Reset game state (!!! This cleanup may not be needed, I may just remove the whole level node and re-create it !!!)
 	lives_left = INITIAL_LIVES
 	coin_count = 0
-	if player: # !!! This cleanup may not be needed, I may just remove the whole level node and re-create it !!!
+	coin_count_changed.emit(coin_count)
+	game_active = false
+	game_time = 0.0
+	last_reported_second = 0
+	second_changed.emit(0, 0, 0)
+	if player:
 		player.queue_free()
 		player = null
 	for boulder in boulders:
@@ -79,7 +102,7 @@ func prepare_game():
 	rally_sub_wave(false) # Will not auto-charge the first wave (Player has no control yet)
 	# Timer for triggering sub-waves. (!!! Max do I just make this a node?)
 	next_sub_wave_timer.wait_time = SUB_WAVE_DURATION
-	next_sub_wave_timer.timeout.connect(rally_sub_wave) # Connecting in code, seems less fragile than editor.
+	next_sub_wave_timer.timeout.connect(rally_sub_wave) # Connecting in code, seems less fragile than editor. !!! ERRORS, but ehh may remove, see above note on cleanup
 	next_sub_wave_timer.stop() # Do not start timer yet (Redundant line, but ehhh)
 
 	# !!! Testing boulders, this is temporary code. (!!!)
@@ -100,6 +123,7 @@ func prepare_game():
 func start_game():
 	set_background_music.emit(battle_song)
 	player.control_enabled = true
+	game_active = true
 	show_wave_start_text() # Show wave text, as it wasn't shown during prepare_game() due to auto_charge == false.
 	call_deferred("charge_sub_wave_async") # Manually charge the enemies after a delay. Deferred to avoid blocking this function.
 	
@@ -188,18 +212,26 @@ func _on_player_died():
 
 # Handle coin collection
 func _on_coin_collected(coin: Coin):
+	effect_spawner.create_floating_text(FloatingText.Type.Small, "+1 Coin", coin.position) # Show floating text at coin position
 	coin.queue_free() # Remove coin from scene
 	coins.erase(coin)
+	coin_count += 1
+	coin_count_changed.emit(coin_count)
 
 # ===== Wave logic ===== #
 
 # Called on new wave starts, but also when player first gains control in start_game().
 func show_wave_start_text():
-	pass # !!! TODO show wave start text, with wave number and sub-wave stats
+	var plural := "" if current_wave_sub_wave_count == 1 else "s"
+	effect_spawner.create_floating_text(FloatingText.Type.Large, "WAVE %d" % current_wave, LEVEL_CENTER + Vector2(0, -40))
+	effect_spawner.create_floating_text(FloatingText.Type.SubLarge, "Contains %d sub-wave%s" % [current_wave_sub_wave_count, plural], LEVEL_CENTER)
+	effect_spawner.create_floating_game_timer(second_changed, last_reported_second, LEVEL_CENTER + Vector2(0, 50))
 
 # Called on wave completion.
 func show_wave_completed_text():
-	pass # !!! TODO show wave completed text, with countdown etc
+	effect_spawner.create_floating_text(FloatingText.Type.Large, "WAVE COMPLETED", LEVEL_CENTER + Vector2(0, -90))
+	effect_spawner.create_floating_text(FloatingText.Type.SubLarge, "Speed increased temporarily, prepare!", LEVEL_CENTER + Vector2(0, -50))
+	effect_spawner.create_floating_countdown(second_changed, last_reported_second, int(WAVE_PREP_DURATION), LEVEL_CENTER + Vector2(0, 00))
 
 # Start the next wave, preparing wave state as needed. Called on game start and when prep time ends.
 # Should be called only when the previous wave is finished, and after prep time is over.
