@@ -107,7 +107,11 @@ func load_into_turret(turret: Turret):
 # Calculate a new position to throw to, based on last throw
 func rethrow(distance_mult: float, speed_mult: float, use_horizontal_offset: bool):
 	var new_target_vector := last_throw_vector * distance_mult
-	var horisontal_offset := 10 if use_horizontal_offset else 0 # Add a small horizontal offset to avoid landing in same spot
+	# Add a small horizontal offset to avoid landing in same spot
+	var horisontal_offset := 0
+	if use_horizontal_offset:
+		horisontal_offset = 10 if position.x < screen_size.x / 2 else -10 # If on right side of screen, nudge left instead of right
+	# Adjust target based on screen edge bounces
 	if last_throw_target.x > screen_size.x or last_throw_target.x < 0:
 		new_target_vector.x = -new_target_vector.x # Momentum was inverted
 	if last_throw_target.y > screen_size.y or last_throw_target.y < 0:
