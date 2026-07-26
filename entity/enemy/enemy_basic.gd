@@ -50,4 +50,4 @@ func _remove_too_close_body(too_close_body: Node2D):
 # Player is in melee range. Explode, killing both the player and itself. (100dmg explosion by default)
 func _on_player_in_melee_range(player: Node2D):
 	if player.control_enabled: # Don't explode if player is not in control, they likely just took damage.
-		call_deferred("explode") # Can't create explosions mid-physics step
+		explode.call_deferred() # Can't create explosions mid-physics step

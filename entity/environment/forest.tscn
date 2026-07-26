@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://bgk62g4m2phxa"]
+
+[ext_resource type="Texture2D" uid="uid://dkev37iv3iejy" path="res://resources/environment/Forest.png" id="1_xl13h"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ildhn"]
+size = Vector2(212, 734)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
+size = Vector2(160, 175)
+
+[node name="Forest" type="StaticBody2D" unique_id=1943779083]
+z_index = 30
+collision_layer = 128
+collision_mask = 0
+
+[node name="CollisionShape2D1" type="CollisionShape2D" parent="." unique_id=2013296252]
+position = Vector2(30, 0)
+shape = SubResource("RectangleShape2D_ildhn")
+debug_color = Color(0, 0.6, 0.69803923, 0)
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="." unique_id=403154277]
+position = Vector2(55, -453)
+shape = SubResource("RectangleShape2D_g4v7s")
+debug_color = Color(0, 0.6, 0.69803923, 0)
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="." unique_id=498337947]
+position = Vector2(55, 454)
+shape = SubResource("RectangleShape2D_g4v7s")
+debug_color = Color(0, 0.6, 0.69803923, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=134134455]
+scale = Vector2(1.3525007, 1.3525007)
+texture = ExtResource("1_xl13h")

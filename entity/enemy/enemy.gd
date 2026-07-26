@@ -12,6 +12,7 @@ signal enemy_died(enemy: Enemy)
 const RALLY_X_POS = 1550; # X coord that enemies try to rally at
 const RALLY_X_VARIANCE = 25; # Allow some enemies to move forwards more. Also acts as tolerance.
 const ANIMATION_SPEED_VARIANCE = 0.1 # Random variance to animation speed, to avoid all enemies animating in sync
+const MIN_STUN_DURATION = 0.2 # Minimum stun duration for low amounts of damage
 
 # Enemy type (Not all combinations are valid!)
 enum Type { BASIC, CART }
@@ -49,6 +50,7 @@ var aggro_target: Node2D = null # Player to aggro, if any
 var health: int # Current health, set to max on ready.
 var too_close_bodies: Array[Node2D] = [] # Bodies that are too close to this enemy, for collision avoidance
 var stun_timer: Timer = null # Timer for stun duration, if any is active
+var targeted_by: WeakRef = null # Turret that is currently targeting this enemy, if any. Prevents multiple turrets targeting the same enemy.
 
 # Prep variable initial values on ready, which should allow archetypes to override them before this runs.
 func _ready():
@@ -83,10 +85,12 @@ func stopAggro():
 
 # Stun the enemy for the given duration, often due to taking damage.
 func stun(duration: float):
+	if duration <= 0:
+		duration = MIN_STUN_DURATION # Ensure stun is at least a small amount, to avoid issues with 0 duration
 	state = State.STUNNED
 	animation.play("hide")
 	if stun_timer == null:
-		stun_timer = Timer.new()
+		stun_timer = Timer.new() # !!! Maybe just add a stun timer node to enemies?
 		stun_timer.one_shot = true
 		stun_timer.timeout.connect(clear_stun)
 		add_child(stun_timer)
@@ -99,15 +103,17 @@ func clear_stun():
 	state = State.AGGRO if aggro_target != null else desired_state # Potentially resume aggro
 	animation.play("idle") # !!! It may be better to seperate state and animation state from this node? !!!
 
-# Doom this enemy. Enemy will stop moving until it is dead
+# Doom this enemy. Enemy will stop moving until it has taken damage or been killed.
 func doom():
 	state = State.DOOMED
+	targeted_by = null # Turret has likely just fired, so we are finished with this refrence
 	animation.play("hide")
 	# !!! TODO show a temporary alert sprite !!!
 
 # Explode at enemies position, killing this enemy.
 func explode():
 	state = State.DEAD
+	desired_state = State.DEAD
 	create_explosion.emit(position) # Default explosion stats
 	die() # Ensure enemy is killed at end of explosion, even if it would normally survive.
 
@@ -115,15 +121,21 @@ func explode():
 func die():
 	health = 0 # Just in case
 	state = State.DEAD
+	desired_state = State.DEAD
 	enemy_died.emit(self)
 
 # Take damage, and die if health reaches 0. Extra_stun is based on base_stun_duration.
 func apply_damage(damage: float, extra_stun: float = 0.0):
 	health -= int(damage)
 	if health <= 0:
-		die()
-	else: # Simply freeze enemy for short duration if not dead
+		die() # Remove enemy from game
+	else:
+		# Resume normal behaviour if no longer targeted by turret. (Though likely about to be stunned)
+		if state == State.DOOMED and targeted_by == null:
+			state = desired_state 
+		# Freeze enemy for short duration based on damage taken
 		var stun_amount = (damage / base_health) + extra_stun
+		print("Enemy took ", damage, " damage, ", extra_stun, " extra stun. Stun amount: ", stun_amount)
 		stun(stun_amount * base_stun_duration)
 
 # ===== #
@@ -192,3 +204,13 @@ func update_velocity(desired_velocity: Vector2):
 		elif position.y > screen_size.y - 10 and avoidance_vector.y > 0:
 			avoidance_vector.y = -avoidance_speed / 2
 		velocity = desired_velocity + avoidance_vector * avoidance_speed
+
+# Helper function to determine if this enemy is a valid target for a turret.
+func is_valid_target_for_turret(turret: Turret) -> bool:
+	if targeted_by != null and targeted_by.get_ref() != turret:
+		return false # Already targeted by another turret
+	if state == State.DOOMED:
+		return false # Doomed or dead enemies are not valid targets
+	if desired_state == State.CHARGING or state == State.AGGRO:
+		return true # Only target enemies that are charging, but exception for rallying enemies that are aggroed on player
+	return false # Not targetable, likely due to rallying or doomed/dead

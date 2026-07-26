@@ -1,0 +1,58 @@
+[gd_scene format=3 uid="uid://cupqeb2xr52b8"]
+
+[ext_resource type="Script" uid="uid://b76q0fedgcq56" path="res://entity/turret/turret.gd" id="1_1lqwx"]
+[ext_resource type="Texture2D" uid="uid://crn6clecsd8my" path="res://resources/entity/TurretBase.png" id="1_c8swq"]
+[ext_resource type="SpriteFrames" uid="uid://wip6xm4c7c37" path="res://entity/turret/turret_arm_frames.tres" id="3_nu5q8"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_pyrg8"]
+radius = 64.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
+size = Vector2(1000, 900)
+
+[node name="Turret" type="StaticBody2D" unique_id=818734226]
+z_index = 2
+collision_layer = 160
+collision_mask = 0
+script = ExtResource("1_1lqwx")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1969247228]
+shape = SubResource("CircleShape2D_pyrg8")
+
+[node name="Body" type="Node2D" parent="." unique_id=787052378]
+
+[node name="Sprite2D" type="Sprite2D" parent="Body" unique_id=212846826]
+texture = ExtResource("1_c8swq")
+
+[node name="Arm" type="Node2D" parent="Body" unique_id=1145716902]
+z_index = 50
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Body/Arm" unique_id=988424164]
+rotation = 1.5707964
+sprite_frames = ExtResource("3_nu5q8")
+animation = &"rest"
+
+[node name="LoadedItemPos" type="Node2D" parent="Body/Arm" unique_id=1951397067]
+position = Vector2(-175, 0)
+rotation = 1.5707964
+
+[node name="StoredItemPos1" type="Node2D" parent="Body" unique_id=783937120]
+position = Vector2(-38, 59)
+
+[node name="StoredItemPos2" type="Node2D" parent="Body" unique_id=1188403961]
+position = Vector2(36, 55)
+
+[node name="EnemyDetectionTimer" type="Timer" parent="." unique_id=1735160494]
+
+[node name="EnemyDetectionArea" type="Area2D" parent="." unique_id=1490953719]
+collision_layer = 0
+collision_mask = 8
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyDetectionArea" unique_id=276613488]
+position = Vector2(900, 0)
+shape = SubResource("RectangleShape2D_g4v7s")
+debug_color = Color(0, 1, 0.44705883, 0)
+
+[connection signal="timeout" from="EnemyDetectionTimer" to="." method="check_for_new_target"]
+[connection signal="body_entered" from="EnemyDetectionArea" to="." method="_on_enemy_in_range"]
+[connection signal="body_exited" from="EnemyDetectionArea" to="." method="_on_enemy_left_range"]
