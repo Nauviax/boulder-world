@@ -10,10 +10,16 @@ class_name Interactable
 # Consts for modifying throw path
 const THROW_HEIGHT_FACTOR = 0.15 # Ratio h/d; 0.15 means max "height" is 15% of throw distance.
 const THROW_SCALE_FACTOR = 0.5 # % of base scale when at peak of arc
-const THROW_INVALID_LAND_LAYER = 128 # Collision layer 8, for static objects that should cause a re-throw if landed on (Castle, etc)
+const TURRET_LAYER = 32 # Collision layer 6, for turrets to detect an attempt to insert
+const INVALID_LAND_LAYER = 128 # Collision layer 8, for static objects that should cause a re-throw if landed on (Castle, etc)
 
-var is_held := false
-var in_air := false
+# Interactable vars
+var can_enter_turret := false # Whether this interactable can be inserted into a turret. If true, possibly enter turrets on collision.
+
+# Interactable state
+var is_held := false # !!! Merge these three into single state enum? (Held, Loaded, InAir) !!!
+var is_loaded := false
+var is_in_air := false
 var last_thrower: Node2D = null # Used to get thrower stats, if needed
 var last_throw_target: Vector2 = Vector2.ZERO # For re-throwing, if needed
 var last_throw_vector: Vector2 = Vector2.ZERO # For re-throwing, if needed
@@ -22,7 +28,7 @@ var last_throw_speed: float = 0.0 # For re-throwing, if needed
 # Pickup, drop and throw to be called by holder/thrower.
 
 func pickup(holder: Node2D, offset: Vector2 = Vector2.ZERO):
-	if in_air: return # Shouldn't happen, but just in case
+	if is_in_air: return # Shouldn't happen, but just in case
 	is_held = true
 	collision_layer = 0 # Disable collision when being held (instantly, not deferred)
 	reparent(holder, false)
@@ -31,6 +37,7 @@ func pickup(holder: Node2D, offset: Vector2 = Vector2.ZERO):
 # For dropping, pass global_position to ensure pos is not relative to holder
 func drop(drop_pos: Vector2, restore_collision: bool = true):
 	is_held = false
+	is_loaded = false
 	collision_layer = init_collision_layer if restore_collision else 0
 	reparent(level_scene, false)
 	position = drop_pos # Theoretically, position == global_position here
@@ -39,9 +46,9 @@ func drop(drop_pos: Vector2, restore_collision: bool = true):
 
 # Animate from current position to target position
 func throw(target_pos: Vector2, speed: float, thrower: Node2D):
-	if is_held:
+	if is_held or is_loaded:
 		drop(global_position, false) # Remain intangible (global)
-	in_air = true
+	is_in_air = true
 	last_thrower = thrower
 	last_throw_target = target_pos
 	last_throw_vector = target_pos - position
@@ -67,8 +74,11 @@ func throw(target_pos: Vector2, speed: float, thrower: Node2D):
 	, 0.0, 1.0, duration)
 	await tween.finished
 	# Check for re-throw if inside a static object
-	if can_land_at_position(position):
-		land()
+	var result: Variant = can_land_at_position(position)
+	if result is Turret:
+		load_into_turret(result) # Load into turret if possible
+	elif result:
+		land() # Land normally at position
 	else:
 		rethrow(0.5, 0.5, true) # Re-throw at half distance and half speed, in same direction
 
@@ -76,7 +86,7 @@ func throw(target_pos: Vector2, speed: float, thrower: Node2D):
 
 # Called when landing, should be overridden by the interactable if extra logic should run
 func land():
-	in_air = false
+	is_in_air = false
 	collision_layer = init_collision_layer
 	z_index = init_z_index
 	settled()
@@ -84,6 +94,15 @@ func land():
 # Called at the end of drop or throw/land. No logic by default here, but can be overridden by the interactable.
 func settled():
 	pass
+
+# Called on loading into a turret
+func load_into_turret(turret: Turret):
+	# Do NOT restore collision layer, it has not landed yet.
+	is_held = false
+	is_in_air = false
+	is_loaded = true
+	z_index = init_z_index
+	turret.store_item(self) # Store in turret. Turret should already have been checked for room at this point
 
 # Calculate a new position to throw to, based on last throw
 func rethrow(distance_mult: float, speed_mult: float, use_horizontal_offset: bool):
@@ -107,12 +126,27 @@ func bounce_screen_edges(next_position: Vector2) -> Vector2:
 		next_position.y = screen_size.y - (next_position.y - screen_size.y)
 	return next_position
 
-# Helper function to determine if a position is save to land at
-func can_land_at_position(pos: Vector2) -> bool:
+# Helper function to determine if a position is save to land at.
+# Returns true if position is empty
+# Returns false if position is out of bounds or collides with a static object (Castle, etc)
+# Returns a TURRET if position is inside a turret, can_enter_turret is true, and turret is active and has room for the item. (Otherwise false)
+func can_land_at_position(pos: Vector2) -> Variant:
 	if pos.x < 0 or pos.x > screen_size.x or pos.y < 0 or pos.y > screen_size.y:
 		return false # Out of bounds is considered invalid
-	var parameters = PhysicsPointQueryParameters2D.new()
-	parameters.position = pos
-	parameters.collision_mask = THROW_INVALID_LAND_LAYER
-	var results = get_world_2d().direct_space_state.intersect_point(parameters, 1)
-	return results.is_empty()
+	var parameters = PhysicsShapeQueryParameters2D.new() # No need to exclude self, as self has no collision when not already landed
+	parameters.shape = collision.shape
+	parameters.transform = Transform2D(0, pos) # Assume 0 rotation on landing
+	parameters.collision_mask = INVALID_LAND_LAYER + (TURRET_LAYER if can_enter_turret else 0) # Maybe check for turrets
+	var results := get_world_2d().direct_space_state.intersect_shape(parameters)
+	if not results.is_empty():
+		if can_enter_turret: # Only check for turrets if this interactable can enter turrets
+			for result in results:
+				var collider = result.collider
+				if collider is Turret:
+					if collider.has_room():
+						return collider # Return the turret if it has room
+					else:
+						return false # Hit a turret, but it is full, so invalid landing
+		return false # Collided with something, but not a turret, so invalid
+	else:
+		return true # No collisions, so valid

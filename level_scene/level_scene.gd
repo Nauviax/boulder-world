@@ -125,7 +125,7 @@ func start_game():
 	player.control_enabled = true
 	game_active = true
 	show_wave_start_text() # Show wave text, as it wasn't shown during prepare_game() due to auto_charge == false.
-	call_deferred("charge_sub_wave_async") # Manually charge the enemies after a delay. Deferred to avoid blocking this function.
+	charge_sub_wave_async.call_deferred() # Manually charge the enemies after a delay. Deferred to avoid blocking this function.
 	
 # Spawning methods
 func spawn_player(has_control: bool = false):
@@ -254,7 +254,7 @@ func rally_sub_wave(auto_charge: bool = true):
 		if enemy.desired_state == Enemy.State.JUSTSPAWNED:
 			enemy.startRally()
 	if auto_charge: # True in all cases aside from first wave spawn
-		call_deferred("charge_sub_wave_async") # Deferred to avoid blocking rally_sub_wave()
+		charge_sub_wave_async.call_deferred() # Deferred to avoid blocking rally_sub_wave()
 
 # Charge the currently rallying enemies, after a delay. Called by rally_sub_wave, and also on game start if needed.
 # Async, call with call_deferred() to avoid blocking the current function.
@@ -273,7 +273,7 @@ func all_enemies_dead():
 	if current_sub_wave < current_wave_sub_wave_count - 1:
 		rally_sub_wave() # Start next sub-wave
 	else:
-		call_deferred("wave_completed_async") # Complete the wave and prepare for the next one. Deferred to avoid blocking this function.
+		wave_completed_async.call_deferred() # Complete the wave and prepare for the next one. Deferred to avoid blocking this function.
 
 # Show wave completed, allow player to prepare, then trigger next wave.
 # Async, call with call_deferred() to avoid blocking the current function.

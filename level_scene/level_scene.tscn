@@ -14,6 +14,7 @@
 [ext_resource type="AudioStream" uid="uid://nn4fdgtnvrgg" path="res://resources/audio/CastleSong.ogg" id="8_x0w4f"]
 [ext_resource type="AudioStream" uid="uid://bl3152tjt2tet" path="res://resources/audio/BattleSong.ogg" id="9_lsv14"]
 [ext_resource type="AudioStream" uid="uid://p1ikea12ww5m" path="res://resources/audio/DeathSong.ogg" id="10_o6iaa"]
+[ext_resource type="PackedScene" uid="uid://cupqeb2xr52b8" path="res://entity/turret/turret.tscn" id="15_lsv14"]
 
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_yf5fn"]
 normal = Vector2(0, 1)
@@ -82,6 +83,21 @@ one_way_collision_direction = Vector2(1, 0)
 
 [node name="SubWaveTimer" type="Timer" parent="." unique_id=2067770767]
 one_shot = true
+
+[node name="Turret1" parent="." unique_id=818734226 instance=ExtResource("15_lsv14")]
+position = Vector2(220, 180)
+arm_state = 1
+
+[node name="Turret2" parent="." unique_id=690133315 instance=ExtResource("15_lsv14")]
+position = Vector2(220, 380)
+arm_state = 1
+
+[node name="Turret3" parent="." unique_id=750637940 instance=ExtResource("15_lsv14")]
+position = Vector2(220, 700)
+arm_state = 1
+
+[node name="Turret4" parent="." unique_id=757564309 instance=ExtResource("15_lsv14")]
+position = Vector2(220, 900)
 
 [connection signal="coin_count_changed" from="." to="Castle" method="_on_coin_count_changed"]
 [connection signal="second_changed" from="." to="Castle" method="_on_second_changed"]

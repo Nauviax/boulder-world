@@ -20,9 +20,9 @@ const BASE_STUN_DURATION := 1.0 # Base stun duration. Player doesn't take damage
 
 # Player throwing consts
 const THROW_DISTANCE := 500.0 # Pixels
-const THROW_SPEED := 450.0 # Pixels per second
+const THROW_SPEED := 450.0 # Pixels per second (Matches turret)
 const THROW_DAMAGE_MODIFIER = 0.5 # Player throw stats are worse than a turret
-const THROW_RADIUS_MODIFIER = 0.75
+const THROW_RADIUS_MODIFIER = 0.5
 
 # Player misc consts
 const HEALTH := 10 # Player "health". Player dies whenever it takes more than this amount of damage, otherwise it is ignored
@@ -106,20 +106,37 @@ func pickup(item: Interactable):
 func drop():
 	if held_item:
 		var drop_pos := pickupNode.global_position
-		if held_item.can_land_at_position(drop_pos):
+		var drop_result: Variant = held_item.can_land_at_position(drop_pos)
+		if drop_result is Turret: # If the item can be loaded into a turret, do so.
+			load_into_turret(drop_result)
+		elif drop_result: # If the item can be dropped at this position, do so.
 			animation.play("drop")
-			held_item.drop(pickupNode.global_position)
+			held_item.drop(drop_pos)
 			held_item = null
-		else: # Do not drop
+		else: # Do not drop, no room
 			above_effect_spawner.create_floating_text(FloatingText.Type.Medium, "No space to drop this")
 
 # Throw held item in direction of last movement input
 func throw():
 	if held_item:
+		# Check for valid turrets to insert in first, if item can be loaded.
+		if held_item.can_enter_turret:
+			var drop_pos := pickupNode.global_position
+			var drop_result: Variant = held_item.can_land_at_position(drop_pos)
+			if drop_result is Turret: # If the item can be loaded into a turret, do so.
+				load_into_turret(drop_result)
+				return # Do not throw if loaded into turret
+		# Throw normally if no valid turret found. (Or if item cannot be loaded into a turret)
 		animation.play("drop")
 		var speed_mult = FASTMODE_MULT if fastmode else 1.0
 		held_item.throw(position + last_dir_input * THROW_DISTANCE * speed_mult, THROW_SPEED * speed_mult, self)
 		held_item = null
+
+# Load an item into turret. Assumes that this is a valid action, checks performed elsewhere
+func load_into_turret(turret: Turret):
+	animation.play("drop")
+	turret.store_item(held_item)
+	held_item = null
 
 # Handle specific effects based on animation frames
 func _on_animation_frame_changed():
