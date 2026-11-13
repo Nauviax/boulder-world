@@ -140,15 +140,15 @@ func get_new_target():
 	var closest_target: Enemy = null
 	if available_targets.size() > 0:
 		# Find best target
-		var closest_distance: float = INF
+		var closest_distance_sq: float = INF
 		for potential_target in available_targets:
 			if not is_valid_target(potential_target):
 				continue # Skip invalid targets
 			var offset = position - potential_target.position # Position is fine here, both should have same parent node.
 			offset.y *= TARGET_Y_BIAS_MULT # Y bias, prefer inline targets.
-			var distance = offset.length()
-			if distance < closest_distance:
-				closest_distance = distance
+			var distance_sq = offset.length_squared() # No need for sqrt
+			if distance_sq < closest_distance_sq:
+				closest_distance_sq = distance_sq
 				closest_target = potential_target
 	# Set target to best target, or null if none found
 	target = closest_target
