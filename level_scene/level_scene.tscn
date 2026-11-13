@@ -97,4 +97,5 @@ arm_state = 1
 position = Vector2(220, 900)
 
 [connection signal="coin_count_changed" from="." to="Castle" method="_on_coin_count_changed"]
+[connection signal="lives_count_changed" from="." to="Castle" method="_on_lives_count_changed"]
 [connection signal="second_changed" from="." to="Castle" method="_on_second_changed"]

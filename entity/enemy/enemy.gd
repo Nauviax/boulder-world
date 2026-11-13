@@ -1,7 +1,8 @@
 extends CharacterBody2D
 class_name Enemy
 
-signal create_explosion(position: Vector2)
+signal create_explosion(position: Vector2, color: Color)
+signal damage_wall()
 signal enemy_died(enemy: Enemy)
 
 @onready var body: Node2D = $Body # Anything that rotates with the character
@@ -114,7 +115,7 @@ func doom():
 func explode():
 	state = State.DEAD
 	desired_state = State.DEAD
-	create_explosion.emit(position) # Default explosion stats
+	create_explosion.emit(position, Color.PURPLE) # Default explosion stats (!!! todo enemy cart wall explode is too small)
 	die() # Ensure enemy is killed at end of explosion, even if it would normally survive.
 
 # Handle death of enemy
@@ -123,6 +124,11 @@ func die():
 	state = State.DEAD
 	desired_state = State.DEAD
 	enemy_died.emit(self)
+
+# Enemy has reached the wall, emit an event then explode normally
+func reached_wall():
+	damage_wall.emit()
+	explode()
 
 # Take damage, and die if health reaches 0. Extra_stun is based on base_stun_duration.
 func apply_damage(damage: float, extra_stun: float = 0.0):
@@ -135,7 +141,7 @@ func apply_damage(damage: float, extra_stun: float = 0.0):
 			state = desired_state 
 		# Freeze enemy for short duration based on damage taken
 		var stun_amount = (damage / base_health) + extra_stun
-		print("Enemy took ", damage, " damage, ", extra_stun, " extra stun. Stun amount: ", stun_amount)
+		# print("Enemy took ", damage, " damage, ", extra_stun, " extra stun. Stun amount: ", stun_amount)
 		stun(stun_amount * base_stun_duration)
 
 # ===== #

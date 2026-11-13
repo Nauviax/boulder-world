@@ -4,8 +4,9 @@ class_name LevelScene
 # Signals for communicating with main scene and UI elements
 signal set_background_music(music: AudioStream)
 signal game_over
-signal second_changed(minutes: int, seconds: int, game_seconds: int)
+signal lives_count_changed(lives: int)
 signal coin_count_changed(new_count: int)
+signal second_changed(minutes: int, seconds: int, game_seconds: int)
 
 # Scene references for spawning
 @export var player_scene: PackedScene
@@ -50,8 +51,18 @@ var enemies: Array[Enemy] = []
 var coins: Array[Coin] = []
 
 # Game state
-var lives_left: int = -1 # Number of lives the player has left
-var coin_count: int = -1 # Number of coins collected by the player
+var _lives_left: int = -1 # Number of lives the player has left
+var lives_left: int:
+	get: return _lives_left
+	set(value):
+		_lives_left = value
+		lives_count_changed.emit(_lives_left)
+var _coin_count: int = -1 # Number of coins collected by the player
+var coin_count: int:
+	get: return _coin_count
+	set(value):
+		_coin_count = value
+		coin_count_changed.emit(_coin_count)
 var current_wave: int = 0 # Current wave number, starting at 1. 0 implies no wave is active
 var current_sub_wave: int = 0 # Current sub-wave number, starting at 0
 var current_wave_sub_wave_count: int = 0 # Number of sub-waves in the current wave
@@ -77,7 +88,6 @@ func prepare_game():
 	# Reset game state (!!! This cleanup may not be needed, I may just remove the whole level node and re-create it !!!)
 	lives_left = INITIAL_LIVES
 	coin_count = 0
-	coin_count_changed.emit(coin_count)
 	game_active = false
 	game_time = 0.0
 	last_reported_second = 0
@@ -126,7 +136,16 @@ func start_game():
 	game_active = true
 	show_wave_start_text() # Show wave text, as it wasn't shown during prepare_game() due to auto_charge == false.
 	charge_sub_wave_async.call_deferred() # Manually charge the enemies after a delay. Deferred to avoid blocking this function.
-	
+
+# End game due to no lives left
+func end_game():
+	# !!! TODO game over logic
+	# !!! Stop sub-waves and new waves from starting (expecially if last enemy is the one to end the game, wave is NOT complete)
+	# !!! Stop all relevant timers. Could be fun to make leftover enemies spin instead of continuing to charge?
+	player.control_enabled = false
+	set_background_music.emit(death_song)
+	game_over.emit() # Show game over menu
+
 # Spawning methods
 func spawn_player(has_control: bool = false):
 	if !player: # Player is not deleted, so only spawn if null
@@ -171,19 +190,23 @@ func spawn_enemies(spawnDef: Enemy.SpawnDef, spawning_sub_wave: int):
 		var enemy: Enemy = enemy_scene.instantiate()
 		enemy.sub_type = spawnDef.sub_type
 		enemy.position = ENEMY_SPAWN_POS + Vector2(randi_range(-5, 5), randi_range(-ENEMY_SPAWN_Y_VARIANCE, ENEMY_SPAWN_Y_VARIANCE))
-		enemy.enemy_died.connect(_on_enemy_died)
 		enemy.create_explosion.connect(create_explosion)
+		enemy.damage_wall.connect(_on_castle_damaged)
+		enemy.enemy_died.connect(_on_enemy_died)
 		add_child(enemy)
 		enemies.append(enemy)
 
 # ===== Signals ===== #
 
 # Create an explosion (Note that this is a SIGNAL response, and not spawned in at level's will)
-func create_explosion(explosion_position: Vector2, explosion_damage: float = -1, explosion_radius: float = -1, explosion_extra_stun: float = -1):
+func create_explosion(explosion_position: Vector2, explosion_color: Color, explosion_damage: float = -1, explosion_count: float = -1, explosion_radius: float = -1, explosion_extra_stun: float = -1):
 	var explosion := explosion_scene.instantiate() as Explosion
 	explosion.position = explosion_position
+	explosion.explosion_color = explosion_color
 	if explosion_damage >= 0:
 		explosion.explosion_damage = explosion_damage
+	if explosion_count >= 0:
+		explosion.explosion_count = explosion_count
 	if explosion_radius >= 0:
 		explosion.explosion_radius = explosion_radius
 	if explosion_extra_stun >= 0:
@@ -203,12 +226,16 @@ func _on_player_died():
 	remove_child(player) # Do not delete player, it may still be referenced
 	lives_left -= 1
 	if lives_left <= 0: # Game over, show game over screen and reset game
-		# !!! TODO game over logic
-		set_background_music.emit(death_song)
-		game_over.emit() # Show game over menu
+		end_game()
 	else: # Respawn player after a delay
 		await get_tree().create_timer(PLAYER_RESPAWN_DELAY).timeout
 		spawn_player(true)
+
+# Handle castle taking damage
+func _on_castle_damaged():
+	lives_left -= 1
+	if lives_left <= 0: # Game over, show game over screen and reset game
+		end_game()
 
 # Handle coin collection
 func _on_coin_collected(coin: Coin):
@@ -216,7 +243,6 @@ func _on_coin_collected(coin: Coin):
 	coin.queue_free() # Remove coin from scene
 	coins.erase(coin)
 	coin_count += 1
-	coin_count_changed.emit(coin_count)
 
 # ===== Wave logic ===== #
 
@@ -297,6 +323,7 @@ func get_wave(wave_number: int) -> Array[Enemy.SpawnDef]:
 	match wave_number:
 		1:
 			return [
+				Enemy.SpawnDef.new(Enemy.Type.CART, Enemy.SubType.BASIC, [1]), # !!! TEMP
 				Enemy.SpawnDef.new(Enemy.Type.BASIC, Enemy.SubType.BASIC, [3]) # 3
 			]
 		2:
